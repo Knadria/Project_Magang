@@ -1,0 +1,81 @@
+Student_ID,Nama,Program,IPK,IELTS,Preferensi_1,Preferensi_2,Preferensi_3
+BINUS001,Student_1,IR,2.73,8.0,University of Windsor,Griffith University,Lancaster University
+BINUS002,Student_2,IR,2.97,6.5,Queen's University,University of Liverpool,University of Adelaide
+BINUS003,Student_3,IBM,3.74,7.5,UIUC,University of Queensland,Griffith University
+BINUS004,Student_4,IBM,3.51,5.5,Southern Cross University,Oxford Brookes University,IIT Pune
+BINUS005,Student_5,IR,3.64,6.5,Northeastern University,University of Stuttgart,University of Washington
+BINUS006,Student_6,IBM,3.6,6.5,University of Western Australia,Queen Mary University of London,Cardiff University
+BINUS007,Student_7,IR,3.01,7.0,University of Exeter,IIT Pune,Northeastern University
+BINUS008,Student_8,IR,2.59,6.5,Heriot-Watt University,University of Salford,UCLA
+BINUS009,Student_9,IBM,3.86,7.0,University of Minnesota,Kingston University,University of Regina
+BINUS010,Student_10,IR,3.48,6.5,Utrecht University,Loughborough University,University of Bath
+BINUS011,Student_11,IR,3.19,7.0,Harvard University,University of Glasgow,Kingston University
+BINUS012,Student_12,IBM,2.53,6.5,Heriot-Watt University,Akdeniz University,Griffith University
+BINUS013,Student_13,IR,3.51,5.5,UC San Diego,University of Montreal,University of Technology Sydney
+BINUS014,Student_14,CS,2.67,6.0,Dalhousie University,UNBC,University of Illinois Urbana-Champaign
+BINUS015,Student_15,CS,2.61,5.5,Indian Institute of Science,University of Nottingham,Goethe University
+BINUS016,Student_16,CS,2.89,7.0,UNIMAS,Queensland University of Technology,Oxford Brookes University
+BINUS017,Student_17,IR,2.65,8.0,UC San Diego,Kobe University,Columbia University
+BINUS018,Student_18,CS,2.59,6.5,UNBC,University of Liverpool,Western University
+BINUS019,Student_19,IBM,2.51,7.5,University of Greenwich,Stanford University,Lakehead University
+BINUS020,Student_20,CS,3.01,8.0,Indian Institute of Science,University of Cambridge,TU Eindhoven
+BINUS021,Student_21,IBM,3.66,7.0,University of Waterloo,Cornell University,Peking University
+BINUS022,Student_22,CS,3.93,6.0,University of Sussex,Xi'an Jiaotong University,University of Minnesota
+BINUS023,Student_23,IR,3.01,6.0,University of Exeter,UC Berkeley,Columbia University
+BINUS024,Student_24,IR,3.18,6.0,Newcastle University,University of Sussex,University of Salford
+BINUS025,Student_25,IR,3.36,7.0,University of Oxford,UT Austin,Cardiff University
+BINUS026,Student_26,IR,2.91,7.5,TU Delft,University of Chicago,Durham University
+BINUS027,Student_27,IBM,3.39,7.0,Kobe University,University of Waterloo,University of Sussex
+BINUS028,Student_28,IBM,3.98,8.0,University of Bonn,École Normale Supérieure Lyon,University of Essex
+BINUS029,Student_29,IR,2.81,6.0,Laurentian University,UT Austin,UC San Diego
+BINUS030,Student_30,CS,3.87,5.5,University of Hamburg,University of Jena,University of Cambridge
+BINUS031,Student_31,IR,2.9,8.0,University of Portsmouth,Kingston University,Hokkaido University
+BINUS032,Student_32,IBM,3.49,6.5,University of Chicago,University of Stuttgart,University of Hull
+BINUS033,Student_33,CS,3.38,7.5,University of British Columbia,Ohio State University,Australian National University
+BINUS034,Student_34,IR,3.9,7.0,University of Bath,Portland State University,Northumbria University
+BINUS035,Student_35,IBM,3.73,5.5,University of Sydney,RWTH Aachen,University of Manitoba
+BINUS036,Student_36,CS,3.55,6.0,Royal Holloway University,IIT Pune,University of Illinois Urbana-Champaign
+BINUS037,Student_37,CS,2.93,6.0,American University of Sharjah,American University in Dubai,University of Wisconsin
+BINUS038,Student_38,IR,3.99,7.0,Harvard University,University of Windsor,Tilburg University
+BINUS039,Student_39,IBM,2.91,6.0,Oregon State University,University of Bath,University of Western Australia
+BINUS040,Student_40,IR,3.25,8.0,Harvard University,Northumbria University,Maastricht University
+BINUS041,Student_41,IBM,2.83,6.0,UIUC,Oregon State University,Queen Mary University of London
+BINUS042,Student_42,IR,2.87,5.5,McMaster University,UIUC,University of Essex
+BINUS043,Student_43,IR,4.0,6.0,Arizona State University,University of Warwick,UQTR
+BINUS044,Student_44,IBM,3.54,5.5,University of Greenwich,University of Oxford,Grenoble INP
+BINUS045,Student_45,IBM,3.61,8.0,Hokkaido University,University of Sheffield,University of Exeter
+BINUS046,Student_46,IBM,3.35,5.5,Stanford University,University of New South Wales,Harvard University
+BINUS047,Student_47,CS,3.63,7.0,Goethe University,University College London,Sun Yat-sen University
+BINUS048,Student_48,IR,3.99,8.0,Tsinghua University,UAE University,University of Newcastle
+BINUS049,Student_49,IR,2.59,5.5,University of Salford,De Montfort University,Akdeniz University
+BINUS050,Student_50,CS,3.35,6.0,University of Illinois Urbana-Champaign,De Montfort University,TU Dresden
+BINUS051,Student_51,IR,3.32,7.5,University of Florida,University of Washington,University of Chicago
+BINUS052,Student_52,IR,3.27,6.0,UC Davis,Utrecht University,Northeastern University
+BINUS053,Student_53,IR,3.63,8.0,University of Glasgow,University of New England,Keele University
+BINUS054,Student_54,IBM,2.6,6.5,University of Washington,Coventry University,RMIT University
+BINUS055,Student_55,CS,3.15,7.5,University of Pennsylvania,University of Sheffield,University of Regina
+BINUS056,Student_56,CS,3.55,7.5,Sorbonne University,Ulster University,University of Manchester
+BINUS057,Student_57,IR,2.53,5.5,Goethe University,University of Texas Austin,Columbia University
+BINUS058,Student_58,CS,3.57,6.0,University of Exeter,University of Strathclyde,UNIMAS
+BINUS059,Student_59,IR,3.65,7.0,Arizona State University,Oxford Brookes University,UC Davis
+BINUS060,Student_60,IBM,2.82,6.5,Kyoto University,University of Sherbrooke,RWTH Aachen
+BINUS061,Student_61,CS,2.51,8.0,University of Essex,University of Edinburgh,UNBC
+BINUS062,Student_62,CS,3.45,6.5,École Polytechnique,UCLA,Australian National University
+BINUS063,Student_63,IR,3.46,6.5,Heidelberg University,University of Chicago,Oxford Brookes University
+BINUS064,Student_64,IR,2.91,5.5,University of Birmingham,Tilburg University,Dalhousie University
+BINUS065,Student_65,CS,3.22,7.0,Osaka University,Kobe University,Oxford Brookes University
+BINUS066,Student_66,IBM,3.92,7.0,Leeds Beckett University,University of Toulouse,University of Jena
+BINUS067,Student_67,IBM,3.09,7.5,University of Chicago,University of Portsmouth,Aston University
+BINUS068,Student_68,IR,3.04,7.5,Western University,American University in Dubai,Grenoble INP
+BINUS069,Student_69,CS,3.1,6.0,University College London,Goethe University,UQTR
+BINUS070,Student_70,CS,2.82,5.5,University of Exeter,University of Sherbrooke,University of Liverpool
+BINUS071,Student_71,IR,3.51,6.5,University of Salford,Utrecht University,Loughborough University
+BINUS072,Student_72,CS,3.21,8.0,Australian National University,University of Westminster,Sun Yat-sen University
+BINUS073,Student_73,IBM,2.74,6.5,Oxford Brookes University,University of Minnesota,University of Sydney
+BINUS074,Student_74,IR,3.31,6.5,UCLA,IIT Pune,Coventry University
+BINUS075,Student_75,CS,3.85,6.5,University of Essex,McGill University,University of Ottawa
+BINUS076,Student_76,IR,2.55,7.0,King's College London,Northumbria University,Southern Cross University
+BINUS077,Student_77,CS,3.01,6.0,University of Manitoba,Texas A&M University,MIT
+BINUS078,Student_78,CS,2.85,8.0,UQTR,UNIMAS,University of Salford
+BINUS079,Student_79,CS,3.97,6.5,University of Southampton,University of Nottingham,Australian National University
+BINUS080,Student_80,CS,3.16,7.5,Indian Institute of Science,University of Westminster,University of Lille
