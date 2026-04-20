@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -6,6 +6,7 @@ from backend.database import SessionLocal, Student, University
 import joblib
 import pandas as pd
 import os
+import io
 
 app = FastAPI(title="Placement Optimization Backend")
 
@@ -45,6 +46,26 @@ class PreferenceSubmit(BaseModel):
     pref_1: str
     pref_2: str
     pref_3: str
+
+class AdminLogin(BaseModel):
+    username: str
+    password: str
+
+class StudentInput(BaseModel):
+    student_id: str
+    name: str
+    program: str
+    gpa: float
+    ielts: float
+
+class UnivInput(BaseModel):
+    name: str
+    country: str
+    programs: str
+    type: str # SE/SA
+    quota: int
+    tuition_fee: float
+    historical_accomodation: float
 
 
 @app.post("/api/student/login")
@@ -121,4 +142,82 @@ def submit_preferences(req: PreferenceSubmit, db: Session = Depends(get_db)):
 def trigger_optimization(budget_per_mhs: int = 50_000_000, db: Session = Depends(get_db)):
     result = run_optimization(db, budget_per_mhs)
     return {"message": "Optimisasi Selesai", "data": result}
+    
+@app.post("/api/admin/login")
+def admin_login_endpoint(req: AdminLogin):
+    if req.username == "admin_1" and req.password == "binus_admin":
+        return {"success": True, "token": "admin-global-class-token"}
+    raise HTTPException(status_code=401, detail="Akses ditolak! Username atau Password salah.")
+
+@app.post("/api/admin/add_student")
+def add_student_manual(req: StudentInput, db: Session = Depends(get_db)):
+    cek = db.query(Student).filter(Student.student_id == req.student_id).first()
+    if cek:
+        raise HTTPException(status_code=400, detail="Student ID sudah terdaftar.")
+    new_mhs = Student(
+        student_id=req.student_id, name=req.name, program=req.program, 
+        gpa=req.gpa, ielts=req.ielts
+    )
+    db.add(new_mhs)
+    db.commit()
+    return {"message": "Data Mahasiswa berhasil ditambahkan!"}
+
+@app.post("/api/admin/upload_students")
+async def upload_students_csv(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    if not file.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="File harus berformat CSV")
+    
+    contents = await file.read()
+    try:
+        df = pd.read_csv(io.BytesIO(contents))
+        count = 0
+        for _, row in df.iterrows():
+            cek = db.query(Student).filter(Student.student_id == str(row.get('Student_ID'))).first()
+            if not cek:
+                new_mhs = Student(
+                    student_id=str(row.get('Student_ID')), name=str(row.get('Nama')),
+                    program=str(row.get('Program')), gpa=float(row.get('IPK')), ielts=float(row.get('IELTS'))
+                )
+                db.add(new_mhs)
+                count += 1
+        db.commit()
+        return {"message": f"Sukses mengunggah. {count} data mahasiswa baru ditambahkan!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal membaca format CSV: {e}")
+
+@app.post("/api/admin/add_university")
+def add_univ_manual(req: UnivInput, db: Session = Depends(get_db)):
+    new_univ = University(
+        name=req.name, country=req.country, programs=req.programs,
+        type=req.type, quota=req.quota, tuition_fee=req.tuition_fee, 
+        historical_accomodation=req.historical_accomodation
+    )
+    db.add(new_univ)
+    db.commit()
+    return {"message": "Data Kampus berhasil ditambahkan!"}
+
+@app.post("/api/admin/upload_universities")
+async def upload_univ_csv(file: UploadFile = File(...), db: Session = Depends(get_db)):
+     if not file.filename.endswith('.csv'):
+         raise HTTPException(status_code=400, detail="File harus berformat CSV")
+     contents = await file.read()
+     try:
+         df = pd.read_csv(io.BytesIO(contents))
+         count = 0
+         for _, row in df.iterrows():
+             new_univ = University(
+                 name=str(row.get('Universitas Rekanan')),
+                 country=str(row.get('Negara')),
+                 programs=str(row.get('Program (GC)')),
+                 type=str(row.get('Jenis (SE/SA)')),
+                 quota=int(row.get('Kuota per batch', 0)),
+                 tuition_fee=float(row.get('Biaya studi (1 semester)', 0)),
+                 historical_accomodation=float(row.get('Historis Biaya Akomodasi / mhs', 0))
+             )
+             db.add(new_univ)
+             count += 1
+         db.commit()
+         return {"message": f"Sukses mengunggah. {count} universitas baru ditambahkan!"}
+     except Exception as e:
+         raise HTTPException(status_code=500, detail=f"Gagal membaca format CSV: {e}")
 

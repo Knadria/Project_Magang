@@ -27,7 +27,7 @@ export default function StudentDashboard() {
   const [student, setStudent] = useState<StudentData | null>(null);
   const [universities, setUniversities] = useState<UniversityData[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // State untuk form preferensi
   const [pref1, setPref1] = useState('');
   const [pref2, setPref2] = useState('');
@@ -41,10 +41,10 @@ export default function StudentDashboard() {
       router.push('/');
       return;
     }
-    
+
     const parsedData = JSON.parse(data);
     setStudent(parsedData);
-    
+
     // Ambil rekomendasi universitas berdasarkan jurusan mereka
     fetch(`http://127.0.0.1:8000/api/universities/recommend?program=${parsedData.program}`)
       .then(res => res.json())
@@ -85,7 +85,7 @@ export default function StudentDashboard() {
       if (res.ok) {
         setSubmitStatus({ loading: false, msg: 'Berhasil menyimpan preferensi Anda!', type: 'success' });
         // Update local storage status
-        setStudent({...student, status_form: 'Sudah Mengisi'});
+        setStudent({ ...student, status_form: 'Sudah Mengisi' });
       } else {
         setSubmitStatus({ loading: false, msg: 'Gagal mengirim data!', type: 'error' });
       }
@@ -126,7 +126,7 @@ export default function StudentDashboard() {
 
       <main className="max-w-6xl mx-auto p-6 mt-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
+
           {/* Kolom Kiri: AI Recommendation Cards */}
           <div className="lg:col-span-2">
             <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
@@ -144,7 +144,7 @@ export default function StudentDashboard() {
                   </div>
                   <h3 className="text-lg font-bold text-white mb-1 pr-12">{u.name}</h3>
                   <p className="text-slate-400 text-sm mb-4">📍 {u.country}</p>
-                  
+
                   <div className="space-y-2 mt-4 pt-4 border-t border-slate-700/50">
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-400">Biaya Studi:</span>
@@ -166,52 +166,52 @@ export default function StudentDashboard() {
 
           {/* Kolom Kanan: Form Pemilihan Preferensi */}
           <div className="lg:col-span-1">
-             <div className="bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-6 sticky top-28">
-                <h2 className="text-xl font-bold text-white mb-6">Pilih Tujuan Anda</h2>
-                
-                {student.status_form === 'Sudah Mengisi' && !submitStatus.msg ? (
-                  <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-4 mb-6">
-                    <p className="text-green-400 text-sm font-medium text-center">✅ Preferensi Anda sudah direkam. Menunggu proses alokasi dari Tim Global Class.</p>
+            <div className="bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-6 sticky top-28">
+              <h2 className="text-xl font-bold text-white mb-6">Pilih Tujuan Anda</h2>
+
+              {student.status_form === 'Sudah Mengisi' && !submitStatus.msg ? (
+                <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-4 mb-6">
+                  <p className="text-green-400 text-sm font-medium text-center">✅ Preferensi Anda sudah direkam. Menunggu proses alokasi dari Tim Global Class.</p>
+                </div>
+              ) : null}
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Preferensi 1 (Paling Diidamkan)</label>
+                  <select value={pref1} onChange={e => setPref1(e.target.value)} required className="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <option value="">-- Pilih Universitas --</option>
+                    {universities.map((u, i) => <option key={i} value={u.name}>{u.name} (Jalur {u.type})</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Preferensi 2</label>
+                  <select value={pref2} onChange={e => setPref2(e.target.value)} required className="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <option value="">-- Pilih Universitas --</option>
+                    {universities.map((u, i) => <option key={i} value={u.name}>{u.name} (Jalur {u.type})</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Preferensi 3</label>
+                  <select value={pref3} onChange={e => setPref3(e.target.value)} required className="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <option value="">-- Pilih Universitas --</option>
+                    {universities.map((u, i) => <option key={i} value={u.name}>{u.name} (Jalur {u.type})</option>)}
+                  </select>
+                </div>
+
+                {submitStatus.msg && (
+                  <div className={`p-3 rounded-lg text-sm border ${submitStatus.type === 'error' ? 'bg-red-500/10 border-red-500/50 text-red-400' : 'bg-green-500/10 border-green-500/50 text-green-400'}`}>
+                    {submitStatus.msg}
                   </div>
-                ) : null}
+                )}
 
-                <form onSubmit={handleSubmit} className="space-y-5">
-                   <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">Preferensi 1 (Paling Diidamkan)</label>
-                      <select value={pref1} onChange={e => setPref1(e.target.value)} required className="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                         <option value="">-- Pilih Universitas --</option>
-                         {universities.map((u, i) => <option key={i} value={u.name}>{u.name} (Jalur {u.type})</option>)}
-                      </select>
-                   </div>
-                   <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">Preferensi 2</label>
-                      <select value={pref2} onChange={e => setPref2(e.target.value)} required className="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                         <option value="">-- Pilih Universitas --</option>
-                         {universities.map((u, i) => <option key={i} value={u.name}>{u.name} (Jalur {u.type})</option>)}
-                      </select>
-                   </div>
-                   <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">Preferensi 3</label>
-                      <select value={pref3} onChange={e => setPref3(e.target.value)} required className="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                         <option value="">-- Pilih Universitas --</option>
-                         {universities.map((u, i) => <option key={i} value={u.name}>{u.name} (Jalur {u.type})</option>)}
-                      </select>
-                   </div>
-
-                   {submitStatus.msg && (
-                      <div className={`p-3 rounded-lg text-sm border ${submitStatus.type === 'error' ? 'bg-red-500/10 border-red-500/50 text-red-400' : 'bg-green-500/10 border-green-500/50 text-green-400'}`}>
-                         {submitStatus.msg}
-                      </div>
-                   )}
-
-                   <button type="submit" disabled={submitStatus.loading} className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">
-                      {submitStatus.loading ? 'Menyimpan...' : 'Simpan Preferensi'}
-                   </button>
-                   <button type="button" onClick={() => {localStorage.clear(); router.push('/');}} className="w-full mt-2 text-sm text-slate-400 hover:text-white transition-colors">
-                     Keluar (Log Out)
-                   </button>
-                </form>
-             </div>
+                <button type="submit" disabled={submitStatus.loading} className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">
+                  {submitStatus.loading ? 'Menyimpan...' : 'Simpan Preferensi'}
+                </button>
+                <button type="button" onClick={() => { localStorage.clear(); router.push('/'); }} className="w-full mt-2 text-sm text-slate-400 hover:text-white transition-colors">
+                  Keluar (Log Out)
+                </button>
+              </form>
+            </div>
           </div>
 
         </div>
