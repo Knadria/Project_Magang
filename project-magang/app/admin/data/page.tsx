@@ -175,7 +175,17 @@ export default function AdminDataManagement() {
                     </div>
                     <div>
                       <label className="block text-sm text-slate-400 mb-1">Program Studi</label>
-                      <input type="text" required value={sProg} onChange={e=>setSProg(e.target.value)} className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white" />
+                      <select
+                        required
+                        value={sProg}
+                        onChange={e => setSProg(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-white"
+                      >
+                        <option value="" disabled>Pilih Program Studi</option>
+                        <option value="CS">CS</option>
+                        <option value="IR">IR</option>
+                        <option value="IBM">IBM</option>
+                      </select>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                        <div>

@@ -138,7 +138,7 @@ export default function StudentDashboard() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {universities.map((u, i) => (
-                <div key={i} className="bg-slate-800 rounded-xl overflow-hidden shadow-lg border border-slate-700 hover:border-blue-500 transition-colors p-5 relative overflow-hidden group">
+                <div key={i} className="bg-slate-800 rounded-xl overflow-hidden shadow-lg border border-slate-700 hover:border-blue-500 transition-colors p-5 relative group">
                   <div className={`absolute top-0 right-0 px-3 py-1 text-xs font-bold rounded-bl-lg ` + (u.type === 'SE' ? 'bg-purple-600 text-white' : 'bg-emerald-600 text-white')}>
                     Jalur {u.type}
                   </div>
