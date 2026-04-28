@@ -176,25 +176,40 @@ export default function StudentDashboard() {
               ) : null}
 
               <form onSubmit={handleSubmit} className="space-y-5">
+                <p className="text-xs text-orange-400 bg-orange-900/20 p-3 rounded border border-orange-500/30">
+                  *Pilihan kampus yang estimasi totalnya melebihi limit Finance (Rp 50.000.000) akan dinonaktifkan otomatis.
+                </p>
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">Preferensi 1 (Paling Diidamkan)</label>
                   <select value={pref1} onChange={e => setPref1(e.target.value)} required className="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
                     <option value="">-- Pilih Universitas --</option>
-                    {universities.map((u, i) => <option key={i} value={u.name}>{u.name} (Jalur {u.type})</option>)}
+                    {universities.map((u, i) => (
+                      <option key={i} value={u.name} disabled={u.estimated_total_cost > 50000000}>
+                        {u.name} (Jalur {u.type}) {u.estimated_total_cost > 50000000 ? '- ❌ Di Luar Budget' : ''}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">Preferensi 2</label>
                   <select value={pref2} onChange={e => setPref2(e.target.value)} required className="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
                     <option value="">-- Pilih Universitas --</option>
-                    {universities.map((u, i) => <option key={i} value={u.name}>{u.name} (Jalur {u.type})</option>)}
+                    {universities.map((u, i) => (
+                      <option key={i} value={u.name} disabled={u.estimated_total_cost > 50000000}>
+                        {u.name} (Jalur {u.type}) {u.estimated_total_cost > 50000000 ? '- ❌ Di Luar Budget' : ''}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">Preferensi 3</label>
                   <select value={pref3} onChange={e => setPref3(e.target.value)} required className="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
                     <option value="">-- Pilih Universitas --</option>
-                    {universities.map((u, i) => <option key={i} value={u.name}>{u.name} (Jalur {u.type})</option>)}
+                    {universities.map((u, i) => (
+                      <option key={i} value={u.name} disabled={u.estimated_total_cost > 50000000}>
+                        {u.name} (Jalur {u.type}) {u.estimated_total_cost > 50000000 ? '- ❌ Di Luar Budget' : ''}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
