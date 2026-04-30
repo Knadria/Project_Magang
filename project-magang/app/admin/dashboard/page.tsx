@@ -42,10 +42,22 @@ export default function AdminDashboardPage() {
   };
 
   const runOptimization = async () => {
+    if (!window.confirm(`Apakah Anda yakin ingin menjalankan alokasi dengan budget Rp ${formatRupiah(parseInt(budget))} per mahasiswa? \nTindakan ini dapat memakan waktu beberapa detik.`)) {
+      return;
+    }
+
     setLoading(true);
     setError('');
     
     try {
+      // 1. Simpan Limit Budget ke Global State Backend
+      await fetch('http://127.0.0.1:8000/api/system/budget', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ budget: parseInt(budget) })
+      });
+
+      // 2. Jalankan Optimisasi
       const res = await fetch(`http://127.0.0.1:8000/api/admin/optimize_placement?budget_per_mhs=${budget}`, {
         method: 'POST'
       });
@@ -53,6 +65,7 @@ export default function AdminDashboardPage() {
       const data = await res.json();
       if (res.ok) {
         setResult(data.data);
+        alert("Optimisasi alokasi berhasil dijalankan!");
       } else {
         setError("Gagal menjalankan algoritma: " + (data.detail || 'Terjadi kesalahan'));
       }

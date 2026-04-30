@@ -67,6 +67,23 @@ class UnivInput(BaseModel):
     tuition_fee: float
     historical_accomodation: float
 
+# Global State untuk melacak setting budget terakhir
+GLOBAL_BUDGET_LIMIT = 50_000_000
+
+class BudgetUpdate(BaseModel):
+    budget: int
+
+@app.get("/api/system/budget")
+def get_system_budget():
+    return {"budget_limit": GLOBAL_BUDGET_LIMIT}
+
+@app.post("/api/system/budget")
+def update_system_budget(req: BudgetUpdate):
+    global GLOBAL_BUDGET_LIMIT
+    GLOBAL_BUDGET_LIMIT = req.budget
+    return {"message": "Budget limit berhasil diubah", "budget_limit": GLOBAL_BUDGET_LIMIT}
+
+
 
 @app.post("/api/student/login")
 def login_student(req: LoginRequest, db: Session = Depends(get_db)):
