@@ -28,6 +28,9 @@ class Student(Base):
     pref_1 = Column(String, nullable=True)
     pref_2 = Column(String, nullable=True)
     pref_3 = Column(String, nullable=True)
+    allocated_univ = Column(String, nullable=True)
+    allocated_cost = Column(Float, default=0.0)
+    cancel_request = Column(Boolean, default=False)
 
 # Membuat engine sqlite di dalam folder backend
 DATABASE_URL = "sqlite:///./backend/app.db"

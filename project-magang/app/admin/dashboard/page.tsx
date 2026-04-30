@@ -20,7 +20,14 @@ interface PlacementResult {
     Tipe_Program: string;
     Limit_Akomodasi: number;
     Total_Biaya: number;
+    is_locked?: boolean;
   }>;
+}
+
+interface CancelRequest {
+  student_id: string;
+  name: string;
+  program: string;
 }
 
 export default function AdminDashboardPage() {
@@ -28,12 +35,25 @@ export default function AdminDashboardPage() {
   const [budget, setBudget] = useState('50000000');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PlacementResult | null>(null);
+  const [cancelRequests, setCancelRequests] = useState<CancelRequest[]>([]);
   const [error, setError] = useState('');
+
+  const fetchCancelRequests = async () => {
+    try {
+      const res = await fetch('http://127.0.0.1:8000/api/admin/cancel_requests');
+      const data = await res.json();
+      setCancelRequests(data);
+    } catch(e) {
+      console.error(e);
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
     if (token !== "admin-global-class-token") {
        router.push('/admin');
+    } else {
+       fetchCancelRequests();
     }
   }, [router]);
 
@@ -80,6 +100,45 @@ export default function AdminDashboardPage() {
     router.push('/admin');
   };
 
+  const approveCancel = async (student_id: string) => {
+    if(!window.confirm("Apakah Anda yakin ingin menyetujui pembatalan ini? Form preferensi mahasiswa akan direset.")) return;
+    try {
+      await fetch('http://127.0.0.1:8000/api/admin/approve_cancel', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student_id })
+      });
+      alert("Pembatalan disetujui!");
+      fetchCancelRequests();
+    } catch(e) {}
+  };
+
+  const approveSinglePlacement = async (p: any) => {
+    if(!window.confirm(`Kunci penempatan ${p.Nama} di ${p.Universitas_Tujuan}?`)) return;
+    try {
+      await fetch('http://127.0.0.1:8000/api/admin/approve_placement', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ student_id: p.Student_ID, univ_name: p.Universitas_Tujuan, total_cost: p.Total_Biaya })
+      });
+      alert(`Berhasil mengunci ${p.Nama}`);
+      runOptimization(); // Refresh data
+    } catch(e) {}
+  };
+
+  const approveAllPlacements = async () => {
+    if(!result) return;
+    if(!window.confirm("Kunci SELURUH penempatan di tabel ini secara permanen?")) return;
+    try {
+      const unlocked = result.placements.filter(p => !p.is_locked).map(p => ({
+        student_id: p.Student_ID, univ_name: p.Universitas_Tujuan, total_cost: p.Total_Biaya
+      }));
+      await fetch('http://127.0.0.1:8000/api/admin/approve_all_placements', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ placements: unlocked })
+      });
+      alert("Seluruh penempatan berhasil dikunci!");
+      runOptimization(); // Refresh data
+    } catch(e) {}
+  };
+
   return (
     <div className="min-h-screen bg-slate-900 text-slate-200 p-8 font-sans">
       <div className="max-w-6xl mx-auto flex justify-between items-center mb-8 border-b border-slate-700 pb-4">
@@ -94,6 +153,29 @@ export default function AdminDashboardPage() {
            <button onClick={logout} className="text-sm text-red-400 hover:text-red-300 underline">Logout</button>
          </div>
       </div>
+
+      {cancelRequests.length > 0 && (
+        <div className="bg-orange-900/30 border border-orange-500/50 p-6 rounded-xl shadow-xl max-w-6xl mx-auto mb-8 animate-in fade-in slide-in-from-top-4">
+          <h2 className="text-xl font-bold text-orange-400 mb-4 flex items-center gap-2">⚠️ Antrean Pengajuan Pembatalan</h2>
+          <table className="w-full text-left text-sm text-slate-300">
+            <thead className="bg-orange-950/50 text-orange-400 text-xs uppercase">
+              <tr><th className="px-4 py-2">NIM</th><th className="px-4 py-2">Nama</th><th className="px-4 py-2">Program</th><th className="px-4 py-2 text-right">Aksi</th></tr>
+            </thead>
+            <tbody>
+              {cancelRequests.map((req, i) => (
+                <tr key={i} className="border-t border-orange-900/50 hover:bg-orange-900/20">
+                  <td className="px-4 py-3">{req.student_id}</td><td className="px-4 py-3 font-bold">{req.name}</td><td className="px-4 py-3">{req.program}</td>
+                  <td className="px-4 py-3 text-right">
+                    <button onClick={() => approveCancel(req.student_id)} className="bg-orange-600 hover:bg-orange-500 text-white px-3 py-1 rounded shadow text-xs font-bold transition-colors">
+                      Izinkan Batal
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl max-w-6xl mx-auto mb-8">
         <h2 className="text-xl font-bold text-white mb-4">Parameter Optimisasi</h2>
@@ -160,8 +242,11 @@ export default function AdminDashboardPage() {
              <div className="p-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
                <div>
                   <h3 className="font-bold text-white">Daftar Hasil Penempatan Final Mahasiswa</h3>
-                  <p className="text-xs text-slate-400">Diurutkan berdasarkan skor IPK untuk perebutan kursi SE.</p>
+                  <p className="text-xs text-slate-400">Tinjau draft algoritma di bawah ini dan kunci pilihan mereka.</p>
                </div>
+               <button onClick={approveAllPlacements} className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded shadow transition-colors">
+                 Approve Semua Draft
+               </button>
              </div>
              <div className="overflow-x-auto">
                <table className="w-full text-left text-sm text-slate-300">
@@ -173,14 +258,15 @@ export default function AdminDashboardPage() {
                      <th className="px-6 py-3">Jalur</th>
                      <th className="px-6 py-3">Limit Akomodasi (AI)</th>
                      <th className="px-6 py-3">Total Cost per Mhs</th>
+                     <th className="px-6 py-3">Aksi</th>
                    </tr>
                  </thead>
                  <tbody className="divide-y divide-slate-700/50">
                    {result.placements.map((p, i) => (
-                     <tr key={i} className="hover:bg-slate-750 transition-colors">
+                     <tr key={i} className={`hover:bg-slate-750 transition-colors ${p.is_locked ? 'bg-blue-900/10' : ''}`}>
                        <td className="px-6 py-4 font-medium text-white">{p.Nama} <br/><span className="text-xs text-slate-500">{p.Student_ID}</span></td>
                        <td className="px-6 py-4"><span className="bg-slate-700 px-2 py-1 rounded text-blue-400">{p.IPK}</span></td>
-                       <td className="px-6 py-4">{p.Universitas_Tujuan}</td>
+                       <td className="px-6 py-4 font-bold">{p.Universitas_Tujuan}</td>
                        <td className="px-6 py-4">
                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${p.Tipe_Program === 'SE' ? 'bg-purple-500/20 text-purple-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
                            {p.Tipe_Program}
@@ -188,6 +274,15 @@ export default function AdminDashboardPage() {
                        </td>
                        <td className="px-6 py-4 text-orange-400">{formatRupiah(p.Limit_Akomodasi)}</td>
                        <td className="px-6 py-4 font-bold text-blue-400">{formatRupiah(p.Total_Biaya)}</td>
+                       <td className="px-6 py-4">
+                         {p.is_locked || p.Universitas_Tujuan === "TIDAK DITEMPATKAN" ? (
+                           <span className="text-xs font-bold text-slate-500">{p.is_locked ? '🔒 TERKUNCI' : '-'}</span>
+                         ) : (
+                           <button onClick={() => approveSinglePlacement(p)} className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded shadow text-xs font-bold">
+                             Approve
+                           </button>
+                         )}
+                       </td>
                      </tr>
                    ))}
                  </tbody>

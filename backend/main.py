@@ -102,7 +102,9 @@ def login_student(req: LoginRequest, db: Session = Depends(get_db)):
         "program": student.program,
         "gpa": student.gpa,
         "ielts": student.ielts,
-        "status_form": "Sudah Mengisi" if student.pref_1 else "Belum Mengisi"
+        "status_form": "Sudah Mengisi" if student.pref_1 else "Belum Mengisi",
+        "allocated_univ": student.allocated_univ,
+        "cancel_request": student.cancel_request
     }
 
 @app.get("/api/universities/recommend")
@@ -238,3 +240,61 @@ async def upload_univ_csv(file: UploadFile = File(...), db: Session = Depends(ge
      except Exception as e:
          raise HTTPException(status_code=500, detail=f"Gagal membaca format CSV: {e}")
 
+class TargetStudent(BaseModel):
+    student_id: str
+
+class PlacementLock(BaseModel):
+    student_id: str
+    univ_name: str
+    total_cost: float
+
+class BulkPlacementLock(BaseModel):
+    placements: list[PlacementLock]
+
+@app.post("/api/student/request_cancel")
+def request_cancel(req: TargetStudent, db: Session = Depends(get_db)):
+    student = db.query(Student).filter(Student.student_id == req.student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student tidak ditemukan")
+    student.cancel_request = True
+    db.commit()
+    return {"message": "Pengajuan pembatalan berhasil dikirim ke Admin."}
+
+@app.get("/api/admin/cancel_requests")
+def get_cancel_requests(db: Session = Depends(get_db)):
+    students = db.query(Student).filter(Student.cancel_request == True).all()
+    return [{"student_id": s.student_id, "name": s.name, "program": s.program} for s in students]
+
+@app.post("/api/admin/approve_cancel")
+def approve_cancel(req: TargetStudent, db: Session = Depends(get_db)):
+    student = db.query(Student).filter(Student.student_id == req.student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student tidak ditemukan")
+    student.pref_1 = None
+    student.pref_2 = None
+    student.pref_3 = None
+    student.cancel_request = False
+    db.commit()
+    return {"message": "Pembatalan disetujui. Data preferensi mahasiswa telah direset."}
+
+@app.post("/api/admin/approve_placement")
+def approve_placement(req: PlacementLock, db: Session = Depends(get_db)):
+    student = db.query(Student).filter(Student.student_id == req.student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student tidak ditemukan")
+    student.allocated_univ = req.univ_name
+    student.allocated_cost = req.total_cost
+    student.cancel_request = False # Just in case
+    db.commit()
+    return {"message": f"Penempatan {student.name} ke {req.univ_name} berhasil dikunci!"}
+
+@app.post("/api/admin/approve_all_placements")
+def approve_all_placements(req: BulkPlacementLock, db: Session = Depends(get_db)):
+    for p in req.placements:
+        student = db.query(Student).filter(Student.student_id == p.student_id).first()
+        if student and not student.allocated_univ:
+            student.allocated_univ = p.univ_name
+            student.allocated_cost = p.total_cost
+            student.cancel_request = False
+    db.commit()
+    return {"message": f"Seluruh {len(req.placements)} penempatan berhasil dikunci permanen!"}

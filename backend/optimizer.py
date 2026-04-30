@@ -48,8 +48,30 @@ def run_optimization(db: Session, budget_per_mhs: int = 50_000_000):
     mhs_tidak_dapat_kuota = 0
     placements = []
     
-    # ALGORITMA ALOKASI GREEDY (Disortir dr mahasiswa IPK tertinggi)
+    # 1. PRE-ALOKASI (Siswa yang sudah dikunci oleh Admin)
+    unlocked_students = []
     for mhs in students:
+        if mhs.allocated_univ:
+            u_name = mhs.allocated_univ.replace(" (Fallback)", "")
+            if u_name in univ_dict:
+                univ_dict[u_name]['kuota_sisa'] -= 1
+            total_biaya_terpakai += mhs.allocated_cost
+            
+            placements.append({
+                'Student_ID': mhs.student_id,
+                'Nama': mhs.name,
+                'IPK': mhs.gpa,
+                'Universitas_Tujuan': f"{mhs.allocated_univ} [🔒 TERKUNCI]",
+                'Tipe_Program': univ_dict[u_name]['tipe'] if u_name in univ_dict else '-',
+                'Limit_Akomodasi': univ_dict[u_name]['limit_akomodasi'] if u_name in univ_dict else 0,
+                'Total_Biaya': mhs.allocated_cost,
+                'is_locked': True
+            })
+        else:
+            unlocked_students.append(mhs)
+            
+    # 2. ALGORITMA ALOKASI GREEDY (Untuk siswa yang belum terkunci)
+    for mhs in unlocked_students:
         allocated = False
         preferensi = [mhs.pref_1, mhs.pref_2, mhs.pref_3]
         
@@ -74,7 +96,8 @@ def run_optimization(db: Session, budget_per_mhs: int = 50_000_000):
                     'Universitas_Tujuan': pref,
                     'Tipe_Program': univ_info['tipe'],
                     'Limit_Akomodasi': univ_info['limit_akomodasi'],
-                    'Total_Biaya': univ_info['total_biaya']
+                    'Total_Biaya': univ_info['total_biaya'],
+                    'is_locked': False
                 })
                 allocated = True
                 break
@@ -99,7 +122,8 @@ def run_optimization(db: Session, budget_per_mhs: int = 50_000_000):
                     'Universitas_Tujuan': cheapest_univ + " (Fallback)",
                     'Tipe_Program': univ_info['tipe'],
                     'Limit_Akomodasi': univ_info['limit_akomodasi'],
-                    'Total_Biaya': univ_info['total_biaya']
+                    'Total_Biaya': univ_info['total_biaya'],
+                    'is_locked': False
                 })
             else:
                 mhs_tidak_dapat_kuota += 1
@@ -110,7 +134,8 @@ def run_optimization(db: Session, budget_per_mhs: int = 50_000_000):
                     'Universitas_Tujuan': "TIDAK DITEMPATKAN",
                     'Tipe_Program': "-",
                     'Limit_Akomodasi': 0,
-                    'Total_Biaya': 0
+                    'Total_Biaya': 0,
+                    'is_locked': False
                 })
                 
     # Menghitung Statistik

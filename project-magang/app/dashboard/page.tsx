@@ -178,14 +178,66 @@ export default function StudentDashboard() {
           {/* Kolom Kanan: Form Pemilihan Preferensi */}
           <div className="lg:col-span-1">
             <div className="bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-6 sticky top-28">
-              <h2 className="text-xl font-bold text-white mb-6">Pilih Tujuan Anda</h2>
+              <h2 className="text-xl font-bold text-white mb-6">Status Penempatan</h2>
 
-              {student.status_form === 'Sudah Mengisi' && !submitStatus.msg ? (
-                <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-4 mb-6">
-                  <p className="text-green-400 text-sm font-medium text-center">✅ Preferensi Anda sudah direkam. Menunggu proses alokasi dari Tim Global Class.</p>
+              {/* JIKA SUDAH DI-APPROVE ADMIN (DIKUNCI) */}
+              {student.allocated_univ ? (
+                <div className="bg-gradient-to-b from-blue-900/50 to-blue-800/20 border border-blue-500/50 rounded-xl p-6 text-center shadow-2xl animate-in fade-in slide-in-from-bottom-4">
+                  <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-400">
+                    <span className="text-3xl">🎉</span>
+                  </div>
+                  <h3 className="text-green-400 font-bold mb-2">SELAMAT!</h3>
+                  <p className="text-slate-300 text-sm mb-4">Anda telah resmi lolos seleksi dan ditempatkan oleh Global Class di:</p>
+                  <div className="bg-slate-900/50 p-4 rounded-lg border border-blue-500/30">
+                     <span className="block font-bold text-blue-400 text-lg">{student.allocated_univ}</span>
+                     <span className="text-xs text-slate-500 mt-1 block">(Status Terkunci Permanen)</span>
+                  </div>
+                  <button type="button" onClick={() => { localStorage.clear(); router.push('/'); }} className="w-full mt-6 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded transition-colors">
+                    Keluar (Log Out)
+                  </button>
                 </div>
-              ) : null}
-
+              ) : 
+              
+              /* JIKA SEDANG MENGAJUKAN BATAL (CANCEL REQUEST) */
+              student.cancel_request ? (
+                <div className="bg-orange-500/10 border border-orange-500/50 rounded-xl p-6 text-center">
+                  <div className="text-4xl mb-4 animate-pulse">⏳</div>
+                  <h3 className="text-orange-400 font-bold mb-2">Menunggu Persetujuan Admin</h3>
+                  <p className="text-slate-300 text-sm mb-4">Anda telah mengajukan pembatalan pilihan kampus. Silakan tunggu Admin Global Class untuk mereset data Anda sebelum Anda bisa memilih kembali.</p>
+                  <button type="button" onClick={() => { localStorage.clear(); router.push('/'); }} className="w-full mt-2 text-sm text-slate-400 hover:text-white transition-colors">
+                    Keluar (Log Out)
+                  </button>
+                </div>
+              ) :
+              
+              /* JIKA SUDAH MENGISI TAPI BELUM DIKUNCI / BELUM BATAL */
+              student.status_form === 'Sudah Mengisi' ? (
+                <div>
+                  <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-4 mb-6">
+                    <p className="text-green-400 text-sm font-medium text-center">✅ Preferensi Anda sudah direkam dan sedang dalam antrean pemrosesan Algoritma.</p>
+                  </div>
+                  <button 
+                    onClick={async () => {
+                      if(window.confirm("Apakah Anda yakin ingin membatalkan pilihan? Anda harus menunggu Admin mereset data Anda.")) {
+                         await fetch('http://127.0.0.1:8000/api/student/request_cancel', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({student_id: student.student_id})
+                         });
+                         setStudent({...student, cancel_request: true});
+                         alert("Pengajuan pembatalan terkirim!");
+                      }
+                    }} 
+                    className="w-full bg-slate-700 hover:bg-red-900/50 hover:text-red-400 border border-slate-600 text-slate-300 font-bold py-3 px-4 rounded-lg transition-all"
+                  >
+                    Ajukan Pembatalan Pilihan
+                  </button>
+                  <button type="button" onClick={() => { localStorage.clear(); router.push('/'); }} className="w-full mt-4 text-sm text-slate-400 hover:text-white transition-colors">
+                    Keluar (Log Out)
+                  </button>
+                </div>
+              ) : 
+              
+              /* JIKA BELUM MENGISI SAMA SEKALI (FORM NORMAL) */
+              (
               <form onSubmit={handleSubmit} className="space-y-5">
                 <p className="text-xs text-orange-400 bg-orange-900/20 p-3 rounded border border-orange-500/30">
                   *Pilihan kampus yang estimasi totalnya melebihi limit Finance ({formatRupiah(budgetLimit)}) akan dinonaktifkan otomatis.
@@ -237,6 +289,7 @@ export default function StudentDashboard() {
                   Keluar (Log Out)
                 </button>
               </form>
+              )}
             </div>
           </div>
 
