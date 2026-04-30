@@ -239,16 +239,16 @@ export default function StudentDashboard() {
               /* JIKA BELUM MENGISI SAMA SEKALI (FORM NORMAL) */
               (
               <form onSubmit={handleSubmit} className="space-y-5">
-                <p className="text-xs text-orange-400 bg-orange-900/20 p-3 rounded border border-orange-500/30">
-                  *Pilihan kampus yang estimasi totalnya melebihi limit Finance ({formatRupiah(budgetLimit)}) akan dinonaktifkan otomatis.
+                <p className="text-xs text-blue-400 bg-blue-900/20 p-3 rounded border border-blue-500/30">
+                  *Sistem Kompetisi: Anda <b>bebas memilih kampus melebihi limit subsidi ({formatRupiah(budgetLimit)})</b>. Namun jika banyak yang memilih kampus mahal, sistem akan memprioritaskan mahasiswa dengan IPK tertinggi. IPK pas-pasan mungkin akan dilempar ke preferensi 2 atau 3 Anda.
                 </p>
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">Preferensi 1 (Paling Diidamkan)</label>
                   <select value={pref1} onChange={e => setPref1(e.target.value)} required className="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
                     <option value="">-- Pilih Universitas --</option>
                     {universities.map((u, i) => (
-                      <option key={i} value={u.name} disabled={u.estimated_total_cost > budgetLimit}>
-                        {u.name} (Jalur {u.type}) {u.estimated_total_cost > budgetLimit ? '- ❌ Di Luar Budget' : ''}
+                      <option key={i} value={u.name}>
+                        {u.name} (Jalur {u.type}) {u.estimated_total_cost > budgetLimit ? '⚠️ Mahal' : ''}
                       </option>
                     ))}
                   </select>
@@ -258,8 +258,8 @@ export default function StudentDashboard() {
                   <select value={pref2} onChange={e => setPref2(e.target.value)} required className="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
                     <option value="">-- Pilih Universitas --</option>
                     {universities.map((u, i) => (
-                      <option key={i} value={u.name} disabled={u.estimated_total_cost > budgetLimit}>
-                        {u.name} (Jalur {u.type}) {u.estimated_total_cost > budgetLimit ? '- ❌ Di Luar Budget' : ''}
+                      <option key={i} value={u.name}>
+                        {u.name} (Jalur {u.type}) {u.estimated_total_cost > budgetLimit ? '⚠️ Mahal' : ''}
                       </option>
                     ))}
                   </select>
@@ -269,8 +269,8 @@ export default function StudentDashboard() {
                   <select value={pref3} onChange={e => setPref3(e.target.value)} required className="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none">
                     <option value="">-- Pilih Universitas --</option>
                     {universities.map((u, i) => (
-                      <option key={i} value={u.name} disabled={u.estimated_total_cost > budgetLimit}>
-                        {u.name} (Jalur {u.type}) {u.estimated_total_cost > budgetLimit ? '- ❌ Di Luar Budget' : ''}
+                      <option key={i} value={u.name}>
+                        {u.name} (Jalur {u.type}) {u.estimated_total_cost > budgetLimit ? '⚠️ Mahal' : ''}
                       </option>
                     ))}
                   </select>

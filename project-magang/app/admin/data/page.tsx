@@ -13,7 +13,7 @@ export default function AdminDataManagement() {
   // Form Student
   const [sId, setSId] = useState('');
   const [sName, setSName] = useState('');
-  const [sProg, setSProg] = useState('Computer Science');
+  const [sProg, setSProg] = useState('CS');
   const [sGpa, setSGpa] = useState('');
   const [sIelts, setSielts] = useState('');
   const [studentCSV, setStudentCSV] = useState<File | null>(null);
@@ -21,7 +21,7 @@ export default function AdminDataManagement() {
   // Form Univ
   const [uName, setUName] = useState('');
   const [uCountry, setUCountry] = useState('');
-  const [uProgs, setUProgs] = useState('Computer Science');
+  const [uProgs, setUProgs] = useState('CS');
   const [uType, setUType] = useState('SE');
   const [uQuota, setUQuota] = useState('');
   const [uFee, setUFee] = useState('');
