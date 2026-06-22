@@ -30,6 +30,17 @@ interface CancelRequest {
   program: string;
 }
 
+interface University {
+  id: number;
+  name: string;
+  country: string;
+  programs: string;
+  type: string;
+  quota: number;
+  tuition_fee: number;
+  historical_accomodation: number;
+}
+
 export default function AdminDashboardPage() {
   const router = useRouter();
   const [budget, setBudget] = useState('50000000');
@@ -37,6 +48,10 @@ export default function AdminDashboardPage() {
   const [result, setResult] = useState<PlacementResult | null>(null);
   const [cancelRequests, setCancelRequests] = useState<CancelRequest[]>([]);
   const [error, setError] = useState('');
+  const [universities, setUniversities] = useState<University[]>([]);
+  const [loadingData, setLoadingData] = useState(false);
+  const [showPlacements, setShowPlacements] = useState(false);
+  const [showUniversities, setShowUniversities] = useState(false);
 
   const fetchCancelRequests = async () => {
     try {
@@ -48,12 +63,31 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const fetchUniversities = async () => {
+    try {
+      const res = await fetch('http://127.0.0.1:8000/api/admin/universities');
+      if (res.ok) {
+        const data = await res.json();
+        setUniversities(data);
+      }
+    } catch(e) {
+      console.error("Gagal fetch data universitas", e);
+    }
+  };
+
+  const fetchAllData = async () => {
+    setLoadingData(true);
+    await fetchUniversities();
+    setLoadingData(false);
+  };
+
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
     if (token !== "admin-global-class-token") {
        router.push('/admin');
     } else {
        fetchCancelRequests();
+       fetchAllData();
     }
   }, [router]);
 
@@ -238,60 +272,140 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
+          {/* Dropdown: Daftar Hasil Penempatan Final Mahasiswa */}
           <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-xl">
-             <div className="p-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center">
-               <div>
-                  <h3 className="font-bold text-white">Daftar Hasil Penempatan Final Mahasiswa</h3>
-                  <p className="text-xs text-slate-400">Tinjau draft algoritma di bawah ini dan kunci pilihan mereka.</p>
+             <button
+               onClick={() => setShowPlacements(!showPlacements)}
+               className="w-full p-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center hover:bg-slate-700/30 transition-colors"
+             >
+               <div className="flex items-center gap-3">
+                 <span className="text-lg">📋</span>
+                 <div className="text-left">
+                   <h3 className="font-bold text-white">Daftar Hasil Penempatan Final Mahasiswa</h3>
+                   <p className="text-xs text-slate-400">Tinjau draft algoritma dan kunci pilihan mereka. ({result.placements.length} mahasiswa)</p>
+                 </div>
                </div>
-               <button onClick={approveAllPlacements} className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded shadow transition-colors">
-                 Approve Semua Draft
-               </button>
-             </div>
-             <div className="overflow-x-auto">
-               <table className="w-full text-left text-sm text-slate-300">
-                 <thead className="bg-slate-900/50 text-slate-400 text-xs uppercase">
-                   <tr>
-                     <th className="px-6 py-3">Student</th>
-                     <th className="px-6 py-3">IPK</th>
-                     <th className="px-6 py-3">Penempatan Tujuan</th>
-                     <th className="px-6 py-3">Jalur</th>
-                     <th className="px-6 py-3">Limit Akomodasi (AI)</th>
-                     <th className="px-6 py-3">Total Cost per Mhs</th>
-                     <th className="px-6 py-3">Aksi</th>
-                   </tr>
-                 </thead>
-                 <tbody className="divide-y divide-slate-700/50">
-                   {result.placements.map((p, i) => (
-                     <tr key={i} className={`hover:bg-slate-750 transition-colors ${p.is_locked ? 'bg-blue-900/10' : ''}`}>
-                       <td className="px-6 py-4 font-medium text-white">{p.Nama} <br/><span className="text-xs text-slate-500">{p.Student_ID}</span></td>
-                       <td className="px-6 py-4"><span className="bg-slate-700 px-2 py-1 rounded text-blue-400">{p.IPK}</span></td>
-                       <td className="px-6 py-4 font-bold">{p.Universitas_Tujuan}</td>
-                       <td className="px-6 py-4">
-                         <span className={`px-2 py-1 rounded-full text-xs font-bold ${p.Tipe_Program === 'SE' ? 'bg-purple-500/20 text-purple-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
-                           {p.Tipe_Program}
-                         </span>
-                       </td>
-                       <td className="px-6 py-4 text-orange-400">{formatRupiah(p.Limit_Akomodasi)}</td>
-                       <td className="px-6 py-4 font-bold text-blue-400">{formatRupiah(p.Total_Biaya)}</td>
-                       <td className="px-6 py-4">
-                         {p.is_locked || p.Universitas_Tujuan === "TIDAK DITEMPATKAN" ? (
-                           <span className="text-xs font-bold text-slate-500">{p.is_locked ? '🔒 TERKUNCI' : '-'}</span>
-                         ) : (
-                           <button onClick={() => approveSinglePlacement(p)} className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded shadow text-xs font-bold">
-                             Approve
-                           </button>
-                         )}
-                       </td>
-                     </tr>
-                   ))}
-                 </tbody>
-               </table>
-             </div>
+               <span className={`text-slate-400 transition-transform duration-300 text-xl ${showPlacements ? 'rotate-180' : ''}`}>▼</span>
+             </button>
+             {showPlacements && (
+               <div>
+                 <div className="px-4 py-2 bg-slate-900/30 flex justify-end">
+                   <button onClick={approveAllPlacements} className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded shadow transition-colors text-sm">
+                     Approve Semua Draft
+                   </button>
+                 </div>
+                 <div className="overflow-x-auto">
+                   <table className="w-full text-left text-sm text-slate-300">
+                     <thead className="bg-slate-900/50 text-slate-400 text-xs uppercase">
+                       <tr>
+                         <th className="px-6 py-3">Student</th>
+                         <th className="px-6 py-3">IPK</th>
+                         <th className="px-6 py-3">Penempatan Tujuan</th>
+                         <th className="px-6 py-3">Jalur</th>
+                         <th className="px-6 py-3">Limit Akomodasi (AI)</th>
+                         <th className="px-6 py-3">Total Cost per Mhs</th>
+                         <th className="px-6 py-3">Aksi</th>
+                       </tr>
+                     </thead>
+                     <tbody className="divide-y divide-slate-700/50">
+                       {result.placements.map((p, i) => (
+                         <tr key={i} className={`hover:bg-slate-750 transition-colors ${p.is_locked ? 'bg-blue-900/10' : ''}`}>
+                           <td className="px-6 py-4 font-medium text-white">{p.Nama} <br/><span className="text-xs text-slate-500">{p.Student_ID}</span></td>
+                           <td className="px-6 py-4"><span className="bg-slate-700 px-2 py-1 rounded text-blue-400">{p.IPK}</span></td>
+                           <td className="px-6 py-4 font-bold">{p.Universitas_Tujuan}</td>
+                           <td className="px-6 py-4">
+                             <span className={`px-2 py-1 rounded-full text-xs font-bold ${p.Tipe_Program === 'SE' ? 'bg-purple-500/20 text-purple-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                               {p.Tipe_Program}
+                             </span>
+                           </td>
+                           <td className="px-6 py-4 text-orange-400">{formatRupiah(p.Limit_Akomodasi)}</td>
+                           <td className="px-6 py-4 font-bold text-blue-400">{formatRupiah(p.Total_Biaya)}</td>
+                           <td className="px-6 py-4">
+                             {p.is_locked || p.Universitas_Tujuan === "TIDAK DITEMPATKAN" ? (
+                               <span className="text-xs font-bold text-slate-500">{p.is_locked ? '🔒 TERKUNCI' : '-'}</span>
+                             ) : (
+                               <button onClick={() => approveSinglePlacement(p)} className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded shadow text-xs font-bold">
+                                 Approve
+                               </button>
+                             )}
+                           </td>
+                         </tr>
+                       ))}
+                     </tbody>
+                   </table>
+                 </div>
+               </div>
+             )}
           </div>
-          
         </div>
       )}
+
+
+
+
+      {/* =============== DROPDOWN: DAFTAR UNIVERSITAS =============== */}
+      <div className="max-w-6xl mx-auto mb-8">
+        <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-xl">
+           <button
+             onClick={() => setShowUniversities(!showUniversities)}
+             className="w-full p-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center hover:bg-slate-700/30 transition-colors"
+           >
+             <div className="flex items-center gap-3">
+               <span className="text-lg">🏫</span>
+               <div className="text-left">
+                 <h3 className="font-bold text-white">Daftar Universitas Rekanan</h3>
+                 <p className="text-xs text-slate-400">{universities.length} kampus terdaftar</p>
+               </div>
+             </div>
+             <span className={`text-slate-400 transition-transform duration-300 text-xl ${showUniversities ? 'rotate-180' : ''}`}>▼</span>
+           </button>
+           {showUniversities && (
+             <div className="overflow-x-auto">
+               {loadingData ? (
+                 <div className="p-8 text-center text-slate-400 text-sm">Memuat data...</div>
+               ) : universities.length === 0 ? (
+                 <div className="p-8 text-center text-slate-500 text-sm">Belum ada data universitas.</div>
+               ) : (
+                 <table className="w-full text-left text-sm text-slate-300">
+                   <thead className="bg-slate-900/50 text-slate-400 text-xs uppercase">
+                     <tr>
+                       <th className="px-6 py-3">No</th>
+                       <th className="px-6 py-3">Nama Universitas</th>
+                       <th className="px-6 py-3">Negara</th>
+                       <th className="px-6 py-3">Program</th>
+                       <th className="px-6 py-3">Jalur</th>
+                       <th className="px-6 py-3">Kuota</th>
+                       <th className="px-6 py-3">Biaya Studi</th>
+                       <th className="px-6 py-3">Hist. Akomodasi</th>
+                     </tr>
+                   </thead>
+                   <tbody className="divide-y divide-slate-700/50">
+                     {universities.map((u, i) => (
+                       <tr key={u.id || i} className="hover:bg-slate-700/30 transition-colors">
+                         <td className="px-6 py-3 text-slate-500">{i + 1}</td>
+                         <td className="px-6 py-3 font-semibold text-white">{u.name}</td>
+                         <td className="px-6 py-3">
+                           <span className="bg-slate-700 px-2 py-1 rounded text-xs">{u.country}</span>
+                         </td>
+                         <td className="px-6 py-3">{u.programs}</td>
+                         <td className="px-6 py-3">
+                           <span className={`px-2 py-1 rounded-full text-xs font-bold ${u.type === 'SE' ? 'bg-purple-500/20 text-purple-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                             {u.type}
+                           </span>
+                         </td>
+                         <td className="px-6 py-3">{u.quota}</td>
+                         <td className="px-6 py-3 text-blue-400">{formatRupiah(u.tuition_fee)}</td>
+                         <td className="px-6 py-3 text-orange-400">{formatRupiah(u.historical_accomodation)}</td>
+                       </tr>
+                     ))}
+                   </tbody>
+                 </table>
+               )}
+             </div>
+           )}
+        </div>
+      </div>
+
     </div>
   );
 }

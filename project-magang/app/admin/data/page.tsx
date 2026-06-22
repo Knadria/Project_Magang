@@ -27,11 +27,30 @@ export default function AdminDataManagement() {
   const [uFee, setUFee] = useState('');
   const [uAcc, setUAcc] = useState('');
   const [univCSV, setUnivCSV] = useState<File | null>(null);
+  const [universitiesData, setUniversitiesData] = useState<any[]>([]);
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
     if (token !== "admin-global-class-token") router.push('/admin');
   }, [router]);
+
+  const fetchUniversities = async () => {
+    try {
+      const res = await fetch('http://127.0.0.1:8000/api/admin/universities');
+      if (res.ok) {
+        const data = await res.json();
+        setUniversitiesData(data);
+      }
+    } catch (e) {
+      console.error("Gagal fetch data universitas", e);
+    }
+  };
+
+  useEffect(() => {
+    if (tab === 'university') {
+      fetchUniversities();
+    }
+  }, [tab]);
 
   const handleManualStudent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,6 +112,7 @@ export default function AdminDataManagement() {
       if(res.ok) {
          setMsg({text: data.message, type: 'success'});
          setUName(''); setUCountry(''); setUQuota(''); setUAcc(''); setUFee('');
+         fetchUniversities();
       } else setMsg({text: data.detail, type: 'error'});
     } catch(e) {
       setMsg({text: 'Koneksi ke backend gagal', type: 'error'});
@@ -116,6 +136,7 @@ export default function AdminDataManagement() {
       if(res.ok) {
          setMsg({text: data.message, type: 'success'});
          setUnivCSV(null);
+         fetchUniversities();
       } else setMsg({text: data.detail, type: 'error'});
     } catch(e) {
       setMsg({text: 'Gagal mengupload file.', type: 'error'});

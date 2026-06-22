@@ -240,6 +240,16 @@ async def upload_univ_csv(file: UploadFile = File(...), db: Session = Depends(ge
      except Exception as e:
          raise HTTPException(status_code=500, detail=f"Gagal membaca format CSV: {e}")
 
+@app.get("/api/admin/universities")
+def get_all_universities(db: Session = Depends(get_db)):
+    univs = db.query(University).all()
+    return univs
+
+@app.get("/api/admin/students")
+def get_all_students(db: Session = Depends(get_db)):
+    students = db.query(Student).all()
+    return students
+
 class TargetStudent(BaseModel):
     student_id: str
 
