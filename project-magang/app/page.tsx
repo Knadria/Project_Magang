@@ -83,7 +83,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full focus:animate-none hover:animate-none bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 flex justify-center items-center h-12"
+              className="cursor-pointer w-full focus:animate-none hover:animate-none bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 flex justify-center items-center h-12"
             >
               {loading ? (
                 <span className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
@@ -95,7 +95,7 @@ export default function LoginPage() {
               <button 
                   type="button" 
                   onClick={() => router.push('/admin')} 
-                  className="text-xs text-slate-400 underline hover:text-slate-200">
+                  className="cursor-pointer text-xs text-slate-400 underline hover:text-slate-200">
                 Masuk sebagai Tim Global Class (Admin)
               </button>
             </div>

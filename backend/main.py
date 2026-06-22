@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from backend.database import SessionLocal, Student, University
+from backend.database import SessionLocal, Student, University, init_db 
 import joblib
 import pandas as pd
 import os
@@ -10,10 +10,15 @@ import io
 
 app = FastAPI(title="Placement Optimization Backend")
 
+@app.on_event("startup")
+def startup():
+    init_db()
+
 # Mengizinkan koneksi dari Frontend (Next.js)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -63,6 +68,21 @@ class UnivInput(BaseModel):
     country: str
     programs: str
     type: str # SE/SA
+    quota: int
+    tuition_fee: float
+    historical_accomodation: float
+
+class StudentUpdate(BaseModel):
+    name: str
+    program: str
+    gpa: float
+    ielts: float
+
+class UnivUpdate(BaseModel):
+    name: str
+    country: str
+    programs: str
+    type: str
     quota: int
     tuition_fee: float
     historical_accomodation: float
@@ -240,15 +260,87 @@ async def upload_univ_csv(file: UploadFile = File(...), db: Session = Depends(ge
      except Exception as e:
          raise HTTPException(status_code=500, detail=f"Gagal membaca format CSV: {e}")
 
-@app.get("/api/admin/universities")
-def get_all_universities(db: Session = Depends(get_db)):
-    univs = db.query(University).all()
-    return univs
-
 @app.get("/api/admin/students")
-def get_all_students(db: Session = Depends(get_db)):
+def list_students(db: Session = Depends(get_db)):
     students = db.query(Student).all()
-    return students
+    return [
+        {
+            "student_id": s.student_id,
+            "name": s.name,
+            "program": s.program,
+            "gpa": s.gpa,
+            "ielts": s.ielts,
+            "pref_1": s.pref_1,
+            "pref_2": s.pref_2,
+            "pref_3": s.pref_3,
+            "allocated_univ": s.allocated_univ,
+            "allocated_cost": s.allocated_cost,
+            "cancel_request": s.cancel_request,
+        }
+        for s in students
+    ]
+
+@app.put("/api/admin/students/{student_id}")
+def update_student(student_id: str, req: StudentUpdate, db: Session = Depends(get_db)):
+    student = db.query(Student).filter(Student.student_id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student tidak ditemukan")
+    student.name = req.name
+    student.program = req.program
+    student.gpa = req.gpa
+    student.ielts = req.ielts
+    db.commit()
+    return {"message": "Data Mahasiswa berhasil diperbarui!"}
+
+@app.delete("/api/admin/students/{student_id}")
+def delete_student(student_id: str, db: Session = Depends(get_db)):
+    student = db.query(Student).filter(Student.student_id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student tidak ditemukan")
+    db.delete(student)
+    db.commit()
+    return {"message": "Data Mahasiswa berhasil dihapus!"}
+
+@app.get("/api/admin/universities")
+def list_universities(db: Session = Depends(get_db)):
+    univs = db.query(University).all()
+    return [
+        {
+            "id": u.id,
+            "name": u.name,
+            "country": u.country,
+            "programs": u.programs,
+            "type": u.type,
+            "quota": u.quota,
+            "tuition_fee": u.tuition_fee,
+            "historical_accomodation": u.historical_accomodation,
+        }
+        for u in univs
+    ]
+
+@app.put("/api/admin/universities/{univ_id}")
+def update_university(univ_id: int, req: UnivUpdate, db: Session = Depends(get_db)):
+    univ = db.query(University).filter(University.id == univ_id).first()
+    if not univ:
+        raise HTTPException(status_code=404, detail="Universitas tidak ditemukan")
+    univ.name = req.name
+    univ.country = req.country
+    univ.programs = req.programs
+    univ.type = req.type
+    univ.quota = req.quota
+    univ.tuition_fee = req.tuition_fee
+    univ.historical_accomodation = req.historical_accomodation
+    db.commit()
+    return {"message": "Data Universitas berhasil diperbarui!"}
+
+@app.delete("/api/admin/universities/{univ_id}")
+def delete_university(univ_id: int, db: Session = Depends(get_db)):
+    univ = db.query(University).filter(University.id == univ_id).first()
+    if not univ:
+        raise HTTPException(status_code=404, detail="Universitas tidak ditemukan")
+    db.delete(univ)
+    db.commit()
+    return {"message": "Data Universitas berhasil dihapus!"}
 
 class TargetStudent(BaseModel):
     student_id: str

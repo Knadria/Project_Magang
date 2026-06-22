@@ -192,7 +192,7 @@ export default function StudentDashboard() {
                      <span className="block font-bold text-blue-400 text-lg">{student.allocated_univ}</span>
                      <span className="text-xs text-slate-500 mt-1 block">(Status Terkunci Permanen)</span>
                   </div>
-                  <button type="button" onClick={() => { localStorage.clear(); router.push('/'); }} className="w-full mt-6 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded transition-colors">
+                  <button type="button" onClick={() => { localStorage.clear(); router.push('/'); }} className="cursor-pointer w-full mt-6 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded transition-colors">
                     Keluar (Log Out)
                   </button>
                 </div>
@@ -204,7 +204,7 @@ export default function StudentDashboard() {
                   <div className="text-4xl mb-4 animate-pulse">⏳</div>
                   <h3 className="text-orange-400 font-bold mb-2">Menunggu Persetujuan Admin</h3>
                   <p className="text-slate-300 text-sm mb-4">Anda telah mengajukan pembatalan pilihan kampus. Silakan tunggu Admin Global Class untuk mereset data Anda sebelum Anda bisa memilih kembali.</p>
-                  <button type="button" onClick={() => { localStorage.clear(); router.push('/'); }} className="w-full mt-2 text-sm text-slate-400 hover:text-white transition-colors">
+                  <button type="button" onClick={() => { localStorage.clear(); router.push('/'); }} className="cursor-pointer w-full mt-2 text-sm text-slate-400 hover:text-white transition-colors">
                     Keluar (Log Out)
                   </button>
                 </div>
@@ -226,11 +226,11 @@ export default function StudentDashboard() {
                          alert("Pengajuan pembatalan terkirim!");
                       }
                     }} 
-                    className="w-full bg-slate-700 hover:bg-red-900/50 hover:text-red-400 border border-slate-600 text-slate-300 font-bold py-3 px-4 rounded-lg transition-all"
+                    className="cursor-pointer w-full bg-slate-700 hover:bg-red-900/50 hover:text-red-400 border border-slate-600 text-slate-300 font-bold py-3 px-4 rounded-lg transition-all"
                   >
                     Ajukan Pembatalan Pilihan
                   </button>
-                  <button type="button" onClick={() => { localStorage.clear(); router.push('/'); }} className="w-full mt-4 text-sm text-slate-400 hover:text-white transition-colors">
+                  <button type="button" onClick={() => { localStorage.clear(); router.push('/'); }} className="cursor-pointer w-full mt-4 text-sm text-slate-400 hover:text-white transition-colors">
                     Keluar (Log Out)
                   </button>
                 </div>
@@ -282,10 +282,10 @@ export default function StudentDashboard() {
                   </div>
                 )}
 
-                <button type="submit" disabled={submitStatus.loading} className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">
+                <button type="submit" disabled={submitStatus.loading} className="cursor-pointer w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors">
                   {submitStatus.loading ? 'Menyimpan...' : 'Simpan Preferensi'}
                 </button>
-                <button type="button" onClick={() => { localStorage.clear(); router.push('/'); }} className="w-full mt-2 text-sm text-slate-400 hover:text-white transition-colors">
+                <button type="button" onClick={() => { localStorage.clear(); router.push('/'); }} className="cursor-pointer w-full mt-2 text-sm text-slate-400 hover:text-white transition-colors">
                   Keluar (Log Out)
                 </button>
               </form>

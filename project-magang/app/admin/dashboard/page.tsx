@@ -181,10 +181,10 @@ export default function AdminDashboardPage() {
            <p className="text-slate-400">Dashboard Eksekusi Algoritma Alokasi (Greedy Placement + AI)</p>
          </div>
          <div className="flex gap-4 items-center">
-           <button onClick={() => router.push('/admin/data')} className="text-sm bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-white font-medium transition-colors">
+           <button onClick={() => router.push('/admin/data')} className="cursor-pointer text-sm bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-white font-medium transition-colors">
              Kelola Database
            </button>
-           <button onClick={logout} className="text-sm text-red-400 hover:text-red-300 underline">Logout</button>
+           <button onClick={logout} className="cursor-pointer text-sm text-red-400 hover:text-red-300 underline">Logout</button>
          </div>
       </div>
 
@@ -200,7 +200,7 @@ export default function AdminDashboardPage() {
                 <tr key={i} className="border-t border-orange-900/50 hover:bg-orange-900/20">
                   <td className="px-4 py-3">{req.student_id}</td><td className="px-4 py-3 font-bold">{req.name}</td><td className="px-4 py-3">{req.program}</td>
                   <td className="px-4 py-3 text-right">
-                    <button onClick={() => approveCancel(req.student_id)} className="bg-orange-600 hover:bg-orange-500 text-white px-3 py-1 rounded shadow text-xs font-bold transition-colors">
+                    <button onClick={() => approveCancel(req.student_id)} className="cursor-pointer bg-orange-600 hover:bg-orange-500 text-white px-3 py-1 rounded shadow text-xs font-bold transition-colors">
                       Izinkan Batal
                     </button>
                   </td>
@@ -228,7 +228,7 @@ export default function AdminDashboardPage() {
           <button 
             onClick={runOptimization}
             disabled={loading}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-lg transition-colors flex items-center justify-center min-w-[200px] h-[50px]"
+            className="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-lg transition-colors flex items-center justify-center min-w-[200px] h-[50px]"
           >
             {loading ? 'Sedang Memproses AI...' : '⚡ Jalankan Alokasi'}
           </button>
@@ -290,7 +290,7 @@ export default function AdminDashboardPage() {
              {showPlacements && (
                <div>
                  <div className="px-4 py-2 bg-slate-900/30 flex justify-end">
-                   <button onClick={approveAllPlacements} className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded shadow transition-colors text-sm">
+                   <button onClick={approveAllPlacements} className="cursor-pointer bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded shadow transition-colors text-sm">
                      Approve Semua Draft
                    </button>
                  </div>
@@ -324,7 +324,7 @@ export default function AdminDashboardPage() {
                              {p.is_locked || p.Universitas_Tujuan === "TIDAK DITEMPATKAN" ? (
                                <span className="text-xs font-bold text-slate-500">{p.is_locked ? '🔒 TERKUNCI' : '-'}</span>
                              ) : (
-                               <button onClick={() => approveSinglePlacement(p)} className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded shadow text-xs font-bold">
+                               <button onClick={() => approveSinglePlacement(p)} className="cursor-pointer bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded shadow text-xs font-bold">
                                  Approve
                                </button>
                              )}
