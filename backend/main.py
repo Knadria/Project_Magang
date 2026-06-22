@@ -368,6 +368,14 @@ def delete_university(univ_id: int, db: Session = Depends(get_db)):
 class TargetStudent(BaseModel):
     student_id: str
 
+class RejectCancelRequest(BaseModel):
+    student_id: str
+    reason: str
+
+class RejectPlacementRequest(BaseModel):
+    student_id: str
+    reason: str
+
 class PlacementLock(BaseModel):
     student_id: str
     univ_name: str
@@ -401,6 +409,26 @@ def approve_cancel(req: TargetStudent, db: Session = Depends(get_db)):
     student.cancel_request = False
     db.commit()
     return {"message": "Pembatalan disetujui. Data preferensi mahasiswa telah direset."}
+
+@app.post("/api/admin/reject_cancel")
+def reject_cancel(req: RejectCancelRequest, db: Session = Depends(get_db)):
+    student = db.query(Student).filter(Student.student_id == req.student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student tidak ditemukan")
+    student.cancel_request = False
+    db.commit()
+    return {"message": f"Pengajuan pembatalan untuk {student.name} ditolak. Alasan: {req.reason}"}
+
+@app.post("/api/admin/reject_placement")
+def reject_placement(req: RejectPlacementRequest, db: Session = Depends(get_db)):
+    student = db.query(Student).filter(Student.student_id == req.student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student tidak ditemukan")
+    student.allocated_univ = None
+    student.allocated_cost = 0.0
+    student.cancel_request = False
+    db.commit()
+    return {"message": f"Penempatan {student.name} ditolak. Alasan: {req.reason}"}
 
 @app.post("/api/admin/approve_placement")
 def approve_placement(req: PlacementLock, db: Session = Depends(get_db)):

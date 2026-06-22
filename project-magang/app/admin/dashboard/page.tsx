@@ -52,6 +52,7 @@ export default function AdminDashboardPage() {
   const [loadingData, setLoadingData] = useState(false);
   const [showPlacements, setShowPlacements] = useState(false);
   const [showUniversities, setShowUniversities] = useState(false);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const fetchCancelRequests = async () => {
     try {
@@ -95,6 +96,16 @@ export default function AdminDashboardPage() {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(number);
   };
 
+  useEffect(() => {
+    if (!notification) return;
+    const timeout = setTimeout(() => setNotification(null), 4000);
+    return () => clearTimeout(timeout);
+  }, [notification]);
+
+  const showNotification = (type: 'success' | 'error', message: string) => {
+    setNotification({ type, message });
+  };
+
   const runOptimization = async () => {
     if (!window.confirm(`Apakah Anda yakin ingin menjalankan alokasi dengan budget Rp ${formatRupiah(parseInt(budget))} per mahasiswa? \nTindakan ini dapat memakan waktu beberapa detik.`)) {
       return;
@@ -119,12 +130,14 @@ export default function AdminDashboardPage() {
       const data = await res.json();
       if (res.ok) {
         setResult(data.data);
-        alert("Optimisasi alokasi berhasil dijalankan!");
+        showNotification('success', 'Optimisasi alokasi berhasil dijalankan!');
       } else {
         setError("Gagal menjalankan algoritma: " + (data.detail || 'Terjadi kesalahan'));
+        showNotification('error', "Gagal menjalankan algoritma: " + (data.detail || 'Terjadi kesalahan'));
       }
     } catch(e) {
       setError("Gagal terhubung ke Backend API.");
+      showNotification('error', 'Gagal terhubung ke Backend API.');
     }
     setLoading(false);
   };
@@ -137,24 +150,110 @@ export default function AdminDashboardPage() {
   const approveCancel = async (student_id: string) => {
     if(!window.confirm("Apakah Anda yakin ingin menyetujui pembatalan ini? Form preferensi mahasiswa akan direset.")) return;
     try {
-      await fetch('http://127.0.0.1:8000/api/admin/approve_cancel', {
+      const res = await fetch('http://127.0.0.1:8000/api/admin/approve_cancel', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student_id })
       });
-      alert("Pembatalan disetujui!");
-      fetchCancelRequests();
-    } catch(e) {}
+      const data = await res.json();
+      if (res.ok) {
+        showNotification('success', data.message || 'Pembatalan disetujui!');
+        fetchCancelRequests();
+      } else {
+        showNotification('error', data.detail || 'Gagal menyetujui pembatalan.');
+      }
+    } catch(e) {
+      showNotification('error', 'Gagal menghubungi backend.');
+    }
+  };
+
+  const rejectCancel = async (req: CancelRequest) => {
+    const reason = window.prompt(`Masukkan alasan menolak pembatalan untuk ${req.name} (${req.student_id})`);
+    if (reason === null) return;
+    const trimmedReason = reason.trim();
+    if (!trimmedReason) {
+      showNotification('error', 'Alasan penolakan wajib diisi.');
+      return;
+    }
+
+    try {
+      const res = await fetch('http://127.0.0.1:8000/api/admin/reject_cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ student_id: req.student_id, reason: trimmedReason })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showNotification('success', data.message || 'Pengajuan pembatalan ditolak.');
+        fetchCancelRequests();
+      } else {
+        showNotification('error', data.detail || 'Gagal menolak pembatalan.');
+      }
+    } catch(e) {
+      showNotification('error', 'Gagal menghubungi backend.');
+    }
   };
 
   const approveSinglePlacement = async (p: any) => {
     if(!window.confirm(`Kunci penempatan ${p.Nama} di ${p.Universitas_Tujuan}?`)) return;
     try {
-      await fetch('http://127.0.0.1:8000/api/admin/approve_placement', {
+      const res = await fetch('http://127.0.0.1:8000/api/admin/approve_placement', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, 
         body: JSON.stringify({ student_id: p.Student_ID, univ_name: p.Universitas_Tujuan, total_cost: p.Total_Biaya })
       });
-      alert(`Berhasil mengunci ${p.Nama}`);
-      runOptimization(); // Refresh data
-    } catch(e) {}
+      const data = await res.json();
+      if (res.ok) {
+        showNotification('success', data.message || `Berhasil mengunci ${p.Nama}`);
+        runOptimization();
+      } else {
+        showNotification('error', data.detail || 'Gagal mengunci penempatan.');
+      }
+    } catch(e) {
+      showNotification('error', 'Gagal menghubungi backend.');
+    }
+  };
+
+  const rejectSinglePlacement = async (p: any) => {
+    const reason = window.prompt(`Masukkan alasan menolak penempatan ${p.Nama} (${p.Student_ID}) ke ${p.Universitas_Tujuan}`);
+    if (reason === null) return;
+    const trimmedReason = reason.trim();
+    if (!trimmedReason) {
+      showNotification('error', 'Alasan penolakan wajib diisi.');
+      return;
+    }
+
+    try {
+      const res = await fetch('http://127.0.0.1:8000/api/admin/reject_placement', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ student_id: p.Student_ID, reason: trimmedReason })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showNotification('success', data.message || `Penempatan ${p.Nama} ditolak.`);
+        runOptimization();
+      } else {
+        showNotification('error', data.detail || 'Gagal menolak penempatan.');
+      }
+    } catch(e) {
+      showNotification('error', 'Gagal menghubungi backend.');
+    }
+  };
+
+  const cancelApproval = async (p: any) => {
+    if(!window.confirm(`Batalkan approval penempatan ${p.Nama} di ${p.Universitas_Tujuan}?`)) return;
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/api/admin/reset_placement/${p.Student_ID}`, {
+        method: 'POST'
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showNotification('success', data.message || `Approval ${p.Nama} berhasil dibatalkan.`);
+        runOptimization();
+      } else {
+        showNotification('error', data.detail || 'Gagal membatalkan approval.');
+      }
+    } catch(e) {
+      showNotification('error', 'Gagal menghubungi backend.');
+    }
   };
 
   const approveAllPlacements = async () => {
@@ -164,13 +263,20 @@ export default function AdminDashboardPage() {
       const unlocked = result.placements.filter(p => !p.is_locked).map(p => ({
         student_id: p.Student_ID, univ_name: p.Universitas_Tujuan, total_cost: p.Total_Biaya
       }));
-      await fetch('http://127.0.0.1:8000/api/admin/approve_all_placements', {
+      const res = await fetch('http://127.0.0.1:8000/api/admin/approve_all_placements', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, 
         body: JSON.stringify({ placements: unlocked })
       });
-      alert("Seluruh penempatan berhasil dikunci!");
-      runOptimization(); // Refresh data
-    } catch(e) {}
+      const data = await res.json();
+      if (res.ok) {
+        showNotification('success', data.message || 'Seluruh penempatan berhasil dikunci!');
+        runOptimization(); // Refresh data
+      } else {
+        showNotification('error', data.detail || 'Gagal mengunci semua penempatan.');
+      }
+    } catch(e) {
+      showNotification('error', 'Gagal menghubungi backend.');
+    }
   };
 
   return (
@@ -188,6 +294,12 @@ export default function AdminDashboardPage() {
          </div>
       </div>
 
+      {notification && (
+        <div className={`max-w-6xl mx-auto mb-4 rounded-lg border px-4 py-3 text-sm ${notification.type === 'success' ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300' : 'border-red-500/40 bg-red-500/10 text-red-300'}`}>
+          {notification.message}
+        </div>
+      )}
+
       {cancelRequests.length > 0 && (
         <div className="bg-orange-900/30 border border-orange-500/50 p-6 rounded-xl shadow-xl max-w-6xl mx-auto mb-8 animate-in fade-in slide-in-from-top-4">
           <h2 className="text-xl font-bold text-orange-400 mb-4 flex items-center gap-2">⚠️ Antrean Pengajuan Pembatalan</h2>
@@ -200,9 +312,14 @@ export default function AdminDashboardPage() {
                 <tr key={i} className="border-t border-orange-900/50 hover:bg-orange-900/20">
                   <td className="px-4 py-3">{req.student_id}</td><td className="px-4 py-3 font-bold">{req.name}</td><td className="px-4 py-3">{req.program}</td>
                   <td className="px-4 py-3 text-right">
-                    <button onClick={() => approveCancel(req.student_id)} className="cursor-pointer bg-orange-600 hover:bg-orange-500 text-white px-3 py-1 rounded shadow text-xs font-bold transition-colors">
-                      Izinkan Batal
-                    </button>
+                    <div className="flex justify-end gap-2">
+                      <button onClick={() => approveCancel(req.student_id)} className="cursor-pointer bg-orange-600 hover:bg-orange-500 text-white px-3 py-1 rounded shadow text-xs font-bold transition-colors">
+                        Izinkan Batal
+                      </button>
+                      <button onClick={() => rejectCancel(req)} className="cursor-pointer bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded shadow text-xs font-bold transition-colors">
+                        Tolak
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -321,12 +438,21 @@ export default function AdminDashboardPage() {
                            <td className="px-6 py-4 text-orange-400">{formatRupiah(p.Limit_Akomodasi)}</td>
                            <td className="px-6 py-4 font-bold text-blue-400">{formatRupiah(p.Total_Biaya)}</td>
                            <td className="px-6 py-4">
-                             {p.is_locked || p.Universitas_Tujuan === "TIDAK DITEMPATKAN" ? (
-                               <span className="text-xs font-bold text-slate-500">{p.is_locked ? '🔒 TERKUNCI' : '-'}</span>
-                             ) : (
-                               <button onClick={() => approveSinglePlacement(p)} className="cursor-pointer bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded shadow text-xs font-bold">
-                                 Approve
+                             {p.Universitas_Tujuan === "TIDAK DITEMPATKAN" ? (
+                               <span className="text-xs font-bold text-slate-500">-</span>
+                             ) : p.is_locked ? (
+                               <button onClick={() => cancelApproval(p)} className="cursor-pointer bg-rose-600 hover:bg-rose-500 text-white px-3 py-1 rounded shadow text-xs font-bold">
+                                 Cancel Approval
                                </button>
+                             ) : (
+                               <div className="flex gap-2">
+                                 <button onClick={() => approveSinglePlacement(p)} className="cursor-pointer bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded shadow text-xs font-bold">
+                                   Approve 
+                                 </button>
+                                 <button onClick={() => rejectSinglePlacement(p)} className="cursor-pointer bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded shadow text-xs font-bold">
+                                   Reject
+                                 </button>
+                               </div>
                              )}
                            </td>
                          </tr>
