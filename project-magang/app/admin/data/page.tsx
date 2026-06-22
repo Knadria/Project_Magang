@@ -34,6 +34,7 @@ export default function AdminDataManagement() {
   const [msg, setMsg] = useState({ text: '', type: '' });
   const [loading, setLoading] = useState(false);
 
+  // Student form state
   const [sId, setSId] = useState('');
   const [sName, setSName] = useState('');
   const [sProg, setSProg] = useState('CS');
@@ -41,8 +42,11 @@ export default function AdminDataManagement() {
   const [sIelts, setSielts] = useState('');
   const [studentCSV, setStudentCSV] = useState<File | null>(null);
   const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
+  const [editingStudentAllocated, setEditingStudentAllocated] = useState<string | null>(null);
   const [students, setStudents] = useState<StudentRecord[]>([]);
+  const [showStudentList, setShowStudentList] = useState(false);
 
+  // University form state
   const [uId, setUId] = useState<number | null>(null);
   const [uName, setUName] = useState('');
   const [uCountry, setUCountry] = useState('');
@@ -54,16 +58,14 @@ export default function AdminDataManagement() {
   const [univCSV, setUnivCSV] = useState<File | null>(null);
   const [editingUniversityId, setEditingUniversityId] = useState<number | null>(null);
   const [universities, setUniversities] = useState<UniversityRecord[]>([]);
+  const [showUniversityList, setShowUniversityList] = useState(false);
 
-  const apiBase = 'http://127.0.0.1:8000';
- 
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
     if (token !== 'admin-global-class-token') {
       router.push('/admin');
       return;
     }
-
     fetchAdminData();
   }, [router]);
 
@@ -102,6 +104,7 @@ export default function AdminDataManagement() {
     setSGpa('');
     setSielts('');
     setEditingStudentId(null);
+    setEditingStudentAllocated(null);
   };
 
   const clearUniversityForm = () => {
@@ -190,6 +193,7 @@ export default function AdminDataManagement() {
 
   const handleEditStudent = (student: StudentRecord) => {
     setEditingStudentId(student.student_id);
+    setEditingStudentAllocated(student.allocated_univ || null);
     setSId(student.student_id);
     setSName(student.name);
     setSProg(student.program);
@@ -197,6 +201,8 @@ export default function AdminDataManagement() {
     setSielts(String(student.ielts));
     setTab('student');
     setMsg({ text: '', type: '' });
+    // scroll ke atas form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDeleteStudent = async (student_id: string) => {
@@ -212,6 +218,28 @@ export default function AdminDataManagement() {
         fetchStudents();
       } else {
         showMessage(data.detail || 'Gagal menghapus mahasiswa.', 'error');
+      }
+    } catch (error) {
+      showMessage('Koneksi ke backend gagal', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPlacement = async (student_id: string, name: string) => {
+    if (!window.confirm(`Batalkan alokasi penempatan untuk ${name}?\nMahasiswa akan bisa dialokasikan ulang.`)) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/api/admin/reset_placement/${student_id}`, {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showMessage(data.message, 'success');
+        setEditingStudentAllocated(null);
+        fetchStudents();
+      } else {
+        showMessage(data.detail || 'Gagal mereset alokasi.', 'error');
       }
     } catch (error) {
       showMessage('Koneksi ke backend gagal', 'error');
@@ -303,6 +331,7 @@ export default function AdminDataManagement() {
     setUAcc(String(univ.historical_accomodation));
     setTab('university');
     setMsg({ text: '', type: '' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDeleteUniv = async (univId: number) => {
@@ -326,9 +355,13 @@ export default function AdminDataManagement() {
     }
   };
 
+  const formatRupiah = (number: number) =>
+    new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(number);
+
   return (
     <div className="min-h-screen bg-slate-900 text-slate-200 p-8 font-sans">
-      <div className="max-w-4xl mx-auto mb-8 border-b border-slate-700 pb-4 flex justify-between items-center">
+      {/* Header */}
+      <div className="max-w-5xl mx-auto mb-8 border-b border-slate-700 pb-4 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">Manajemen Data Admin</h1>
           <p className="text-slate-400">CRUD Mahasiswa dan Universitas untuk tim admin.</p>
@@ -341,43 +374,59 @@ export default function AdminDataManagement() {
         </button>
       </div>
 
-      <div className="max-w-4xl mx-auto flex gap-4 mb-6">
+      {/* Tab Selector */}
+      <div className="max-w-5xl mx-auto flex gap-4 mb-6">
         <button
-          onClick={() => {
-            setTab('student');
-            setMsg({ text: '', type: '' });
-          }}
+          onClick={() => { setTab('student'); setMsg({ text: '', type: '' }); }}
           className={`px-6 py-3 rounded-lg font-bold transition-all cursor-pointer ${tab === 'student' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
         >
           📝 Kelola Mahasiswa
         </button>
         <button
-          onClick={() => {
-            setTab('university');
-            setMsg({ text: '', type: '' });
-          }}
+          onClick={() => { setTab('university'); setMsg({ text: '', type: '' }); }}
           className={`px-6 py-3 rounded-lg font-bold transition-all cursor-pointer ${tab === 'university' ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
         >
           🏫 Kelola Kampus
         </button>
       </div>
 
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
+        {/* Alert Message */}
         {msg.text && (
-          <div
-            className={`p-4 mb-6 rounded-lg font-medium border ${msg.type === 'error' ? 'bg-red-900/30 border-red-500/50 text-red-400' : 'bg-green-900/30 border-green-500/50 text-green-400'}`}
-          >
+          <div className={`p-4 mb-6 rounded-lg font-medium border ${msg.type === 'error' ? 'bg-red-900/30 border-red-500/50 text-red-400' : 'bg-green-900/30 border-green-500/50 text-green-400'}`}>
             {msg.type === 'error' ? '❌ ' : '✅ '} {msg.text}
           </div>
         )}
 
+        {/* ===================== TAB: MAHASISWA ===================== */}
         {tab === 'student' && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            {/* Form + Upload */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+              {/* Form Input */}
               <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl">
-                <h2 className="text-xl font-bold text-white mb-6 border-b border-slate-700 pb-2">
+                <h2 className="text-xl font-bold text-white mb-4 border-b border-slate-700 pb-2">
                   {editingStudentId ? 'Edit Mahasiswa' : 'Input Manual Baru'}
                 </h2>
+
+                {/* Banner alokasi aktif */}
+                {editingStudentId && editingStudentAllocated && (
+                  <div className="mb-4 p-3 bg-blue-900/40 border border-blue-500/50 rounded-lg flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs text-blue-300 font-semibold uppercase tracking-wide mb-1">🔒 Sudah Ditempatkan</p>
+                      <p className="text-sm text-white font-bold">{editingStudentAllocated}</p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={loading}
+                      onClick={() => handleResetPlacement(editingStudentId, sName)}
+                      className="cursor-pointer shrink-0 bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors"
+                    >
+                      🔓 Cancel Alokasi
+                    </button>
+                  </div>
+                )}
+
                 <form onSubmit={handleSaveStudent} className="space-y-4">
                   <div>
                     <label className="block text-sm text-slate-400 mb-1">Student ID</label>
@@ -450,6 +499,7 @@ export default function AdminDataManagement() {
                 </form>
               </div>
 
+              {/* Upload CSV */}
               <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl h-fit">
                 <h2 className="text-xl font-bold text-white mb-6 border-b border-slate-700 pb-2">Upload File Dataset (CSV)</h2>
                 <form onSubmit={handleUploadStudent} className="space-y-4">
@@ -470,49 +520,96 @@ export default function AdminDataManagement() {
               </div>
             </div>
 
-            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl overflow-x-auto">
-              <div className="mb-4 flex items-center justify-between gap-4">
-                <h2 className="text-xl font-bold text-white">Daftar Mahasiswa</h2>
-                <span className="text-slate-400 text-sm">{students.length} mahasiswa</span>
-              </div>
-              <table className="min-w-full text-left text-sm text-slate-300">
-                <thead className="bg-slate-900/50 text-slate-400 text-xs uppercase">
-                  <tr>
-                    <th className="px-4 py-3">ID</th>
-                    <th className="px-4 py-3">Nama</th>
-                    <th className="px-4 py-3">Program</th>
-                    <th className="px-4 py-3">IPK</th>
-                    <th className="px-4 py-3">IELTS</th>
-                    <th className="px-4 py-3">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {students.map(student => (
-                    <tr key={student.student_id} className="border-t border-slate-700 hover:bg-slate-900/60">
-                      <td className="px-4 py-3 text-slate-100">{student.student_id}</td>
-                      <td className="px-4 py-3">{student.name}</td>
-                      <td className="px-4 py-3">{student.program}</td>
-                      <td className="px-4 py-3">{student.gpa.toFixed(2)}</td>
-                      <td className="px-4 py-3">{student.ielts}</td>
-                      <td className="px-4 py-3 space-x-2 space-y-3">
-                        <button onClick={() => handleEditStudent(student)} className="w-15 cursor-pointer bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded text-xs font-bold">
-                          Edit
-                        </button>
-                        <button onClick={() => handleDeleteStudent(student.student_id)} className="w-15 cursor-pointer bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded text-xs font-bold">
-                          Hapus
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            {/* Daftar Mahasiswa - Dropdown */}
+            <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-xl mb-6">
+              <button
+                onClick={() => setShowStudentList(!showStudentList)}
+                className="w-full p-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center hover:bg-slate-700/30 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-lg">📝</span>
+                  <div className="text-left">
+                    <h3 className="font-bold text-white">Daftar Mahasiswa</h3>
+                    <p className="text-xs text-slate-400">{students.length} mahasiswa terdaftar</p>
+                  </div>
+                </div>
+                <span className={`text-slate-400 transition-transform duration-300 text-xl ${showStudentList ? 'rotate-180' : ''}`}>▼</span>
+              </button>
+
+              {showStudentList && (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-left text-sm text-slate-300">
+                    <thead className="bg-slate-900/50 text-slate-400 text-xs uppercase">
+                      <tr>
+                        <th className="px-4 py-3">ID</th>
+                        <th className="px-4 py-3">Nama</th>
+                        <th className="px-4 py-3">Program</th>
+                        <th className="px-4 py-3">IPK</th>
+                        <th className="px-4 py-3">IELTS</th>
+                        <th className="px-4 py-3">Status Alokasi</th>
+                        <th className="px-4 py-3">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {students.map(student => (
+                        <tr key={student.student_id} className={`border-t border-slate-700 hover:bg-slate-900/60 transition-colors ${student.allocated_univ ? 'bg-blue-900/5' : ''}`}>
+                          <td className="px-4 py-3 text-slate-100 font-mono text-xs">{student.student_id}</td>
+                          <td className="px-4 py-3 font-medium">{student.name}</td>
+                          <td className="px-4 py-3">{student.program}</td>
+                          <td className="px-4 py-3">{student.gpa.toFixed(2)}</td>
+                          <td className="px-4 py-3">{student.ielts}</td>
+                          <td className="px-4 py-3">
+                            {student.allocated_univ ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-blue-500/20 text-blue-400">
+                                🔒 {student.allocated_univ}
+                              </span>
+                            ) : student.pref_1 ? (
+                              <span className="px-2 py-1 rounded-full text-xs font-bold bg-yellow-500/20 text-yellow-400">
+                                ⏳ Menunggu Alokasi
+                              </span>
+                            ) : (
+                              <span className="px-2 py-1 rounded-full text-xs font-bold bg-slate-600/50 text-slate-400">
+                                — Belum Mengisi
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex gap-2 flex-wrap">
+                              <button
+                                onClick={() => handleEditStudent(student)}
+                                className="cursor-pointer bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded text-xs font-bold transition-colors"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteStudent(student.student_id)}
+                                className="cursor-pointer bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded text-xs font-bold transition-colors"
+                              >
+                                Hapus
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {students.length === 0 && (
+                        <tr>
+                          <td colSpan={7} className="px-4 py-8 text-center text-slate-500">Belum ada data mahasiswa.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </>
         )}
 
+        {/* ===================== TAB: UNIVERSITAS ===================== */}
         {tab === 'university' && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            {/* Form + Upload */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+              {/* Form Input */}
               <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl">
                 <h2 className="text-xl font-bold text-white mb-6 border-b border-slate-700 pb-2">
                   {editingUniversityId ? 'Edit Universitas' : 'Input Manual Univ. Rekanan'}
@@ -573,7 +670,7 @@ export default function AdminDataManagement() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-slate-400 mb-1">Biaya Studi (USD)</label>
+                      <label className="block text-sm text-slate-400 mb-1">Biaya Studi (IDR)</label>
                       <input
                         type="number"
                         required
@@ -606,6 +703,7 @@ export default function AdminDataManagement() {
                 </form>
               </div>
 
+              {/* Upload CSV */}
               <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl h-fit">
                 <h2 className="text-xl font-bold text-white mb-6 border-b border-slate-700 pb-2">Upload File Dataset (CSV)</h2>
                 <form onSubmit={handleUploadUniv} className="space-y-4">
@@ -626,46 +724,80 @@ export default function AdminDataManagement() {
               </div>
             </div>
 
-            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl overflow-x-auto">
-              <div className="mb-4 flex items-center justify-between gap-4">
-                <h2 className="text-xl font-bold text-white">Daftar Universitas</h2>
-                <span className="text-slate-400 text-sm">{universities.length} universitas</span>
-              </div>
-              <table className="min-w-full text-left text-sm text-slate-300">
-                <thead className="bg-slate-900/50 text-slate-400 text-xs uppercase">
-                  <tr>
-                    <th className="px-4 py-3">Nama</th>
-                    <th className="px-4 py-3">Negara</th>
-                    <th className="px-4 py-3">Program</th>
-                    <th className="px-4 py-3">Jalur</th>
-                    <th className="px-4 py-3">Kuota</th>
-                    <th className="px-4 py-3">Biaya Pendidikan</th>
-                    <th className="px-4 py-3">Biaya Akomodasi</th>
-                    <th className="px-4 py-3">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {universities.map(univ => (
-                    <tr key={univ.id} className="border-t border-slate-700 hover:bg-slate-900/60">
-                      <td className="px-4 py-3 text-slate-100">{univ.name}</td>
-                      <td className="px-4 py-3">{univ.country}</td>
-                      <td className="px-4 py-3">{univ.programs}</td>
-                      <td className="px-4 py-3">{univ.type}</td>
-                      <td className="px-4 py-3">{univ.quota}</td>
-                      <td className="px-4 py-3">{univ.tuition_fee}</td>
-                      <td className="px-4 py-3">{univ.historical_accomodation}</td>
-                      <td className="px-4 py-3 space-x-2 space-y-3">
-                        <button onClick={() => handleEditUniv(univ)} className="cursor-pointer w-15 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded text-xs font-bold">
-                          Edit
-                        </button>
-                        <button onClick={() => handleDeleteUniv(univ.id)} className="cursor-pointer w-15 bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded text-xs font-bold">
-                          Hapus
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            {/* Daftar Universitas - Dropdown */}
+            <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-xl mb-6">
+              <button
+                onClick={() => setShowUniversityList(!showUniversityList)}
+                className="w-full p-4 border-b border-slate-700 bg-slate-800/50 flex justify-between items-center hover:bg-slate-700/30 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-lg">🏫</span>
+                  <div className="text-left">
+                    <h3 className="font-bold text-white">Daftar Universitas Rekanan</h3>
+                    <p className="text-xs text-slate-400">{universities.length} kampus terdaftar</p>
+                  </div>
+                </div>
+                <span className={`text-slate-400 transition-transform duration-300 text-xl ${showUniversityList ? 'rotate-180' : ''}`}>▼</span>
+              </button>
+
+              {showUniversityList && (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-left text-sm text-slate-300">
+                    <thead className="bg-slate-900/50 text-slate-400 text-xs uppercase">
+                      <tr>
+                        <th className="px-4 py-3">Nama</th>
+                        <th className="px-4 py-3">Negara</th>
+                        <th className="px-4 py-3">Program</th>
+                        <th className="px-4 py-3">Jalur</th>
+                        <th className="px-4 py-3">Kuota</th>
+                        <th className="px-4 py-3">Biaya Pendidikan</th>
+                        <th className="px-4 py-3">Biaya Akomodasi</th>
+                        <th className="px-4 py-3">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {universities.map(univ => (
+                        <tr key={univ.id} className="border-t border-slate-700 hover:bg-slate-900/60 transition-colors">
+                          <td className="px-4 py-3 font-semibold text-slate-100">{univ.name}</td>
+                          <td className="px-4 py-3">
+                            <span className="bg-slate-700 px-2 py-1 rounded text-xs">{univ.country}</span>
+                          </td>
+                          <td className="px-4 py-3">{univ.programs}</td>
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${univ.type === 'SE' ? 'bg-purple-500/20 text-purple-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                              {univ.type}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">{univ.quota}</td>
+                          <td className="px-4 py-3 text-blue-400">{formatRupiah(univ.tuition_fee)}</td>
+                          <td className="px-4 py-3 text-orange-400">{formatRupiah(univ.historical_accomodation)}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex gap-2 flex-wrap">
+                              <button
+                                onClick={() => handleEditUniv(univ)}
+                                className="cursor-pointer bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded text-xs font-bold transition-colors"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteUniv(univ.id)}
+                                className="cursor-pointer bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded text-xs font-bold transition-colors"
+                              >
+                                Hapus
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                      {universities.length === 0 && (
+                        <tr>
+                          <td colSpan={8} className="px-4 py-8 text-center text-slate-500">Belum ada data universitas.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </>
         )}

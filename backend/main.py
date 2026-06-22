@@ -128,13 +128,15 @@ def login_student(req: LoginRequest, db: Session = Depends(get_db)):
     }
 
 @app.get("/api/universities/recommend")
-def get_university_recommendations(program: str, db: Session = Depends(get_db)):
-    # Mencari universitas yang programnya cocok dengan mahasiswa
+def get_university_recommendations(program: str, gpa: float = 0.0, ielts: float = 0.0, db: Session = Depends(get_db)):
+    """Mengembalikan semua universitas yang cocok dengan program mahasiswa.
+    Jika gpa dan ielts diberikan, 4 universitas teratas diurutkan berdasarkan skor AI
+    yang mempertimbangkan kecocokan nilai mahasiswa dengan profil universitas.
+    """
     univs = db.query(University).filter(University.programs.contains(program)).all()
     
     result = []
     for u in univs:
-        # Jika AI model tersedia, lakukan prediksi biaya akomodasi (On-the-fly)
         prediksi_akomodasi = u.historical_accomodation
         if catboost_model:
             df_temp = pd.DataFrame({
@@ -148,6 +150,25 @@ def get_university_recommendations(program: str, db: Session = Depends(get_db)):
             prediksi_akomodasi = max(0, float(pred))
             
         total_estimate = u.tuition_fee + prediksi_akomodasi
+        
+        # Hitung skor AI berdasarkan profil mahasiswa:
+        # Mahasiswa IPK/IELTS tinggi → lebih cocok ke kampus kompetitif (kuota kecil, biaya lebih tinggi)
+        # Mahasiswa IPK/IELTS rendah → lebih cocok ke kampus dengan kuota besar
+        ai_score = 0.0
+        if gpa > 0 or ielts > 0:
+            # Normalisasi: IPK max 4.0, IELTS max 9.0
+            norm_gpa = gpa / 4.0
+            norm_ielts = ielts / 9.0
+            student_strength = (norm_gpa * 0.6 + norm_ielts * 0.4)  # bobot IPK lebih besar
+            
+            # Kampus dengan kuota kecil = lebih prestisius, cocok untuk mahasiswa kuat
+            quota_factor = max(0, 1 - (u.quota / 20.0))  # kuota < 20 = prestisius
+            
+            # Biaya reasonable relatif terhadar kekuatan mahasiswa
+            # Mahasiswa kuat → lebih berani memilih kampus mahal
+            cost_factor = 1 - min(1.0, total_estimate / 50_000_000) * (1 - student_strength)
+            
+            ai_score = (student_strength * 0.5 + quota_factor * 0.3 + cost_factor * 0.2)
             
         result.append({
             "id": u.id,
@@ -155,12 +176,14 @@ def get_university_recommendations(program: str, db: Session = Depends(get_db)):
             "country": u.country,
             "type": u.type,
             "quota": u.quota,
+            "programs": u.programs,
             "tuition_fee": u.tuition_fee,
             "predicted_accomodation": prediksi_akomodasi,
-            "estimated_total_cost": total_estimate
+            "estimated_total_cost": total_estimate,
+            "ai_score": round(ai_score, 4)
         })
         
-    # Sort dari termurah
+    # Sort dari termurah by default
     result.sort(key=lambda x: x["estimated_total_cost"])
     return result
 
@@ -400,3 +423,15 @@ def approve_all_placements(req: BulkPlacementLock, db: Session = Depends(get_db)
             student.cancel_request = False
     db.commit()
     return {"message": f"Seluruh {len(req.placements)} penempatan berhasil dikunci permanen!"}
+
+@app.post("/api/admin/reset_placement/{student_id}")
+def reset_placement(student_id: str, db: Session = Depends(get_db)):
+    """Reset alokasi mahasiswa yang sudah di-approve (cancel penempatan dari sisi admin)."""
+    student = db.query(Student).filter(Student.student_id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student tidak ditemukan")
+    student.allocated_univ = None
+    student.allocated_cost = 0.0
+    student.cancel_request = False
+    db.commit()
+    return {"message": f"Alokasi {student.name} berhasil direset. Mahasiswa bisa dialokasikan ulang."}
